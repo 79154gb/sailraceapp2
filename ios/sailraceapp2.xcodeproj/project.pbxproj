@@ -14,6 +14,13 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		7699B88040F8A987B510C191 /* libPods-sailraceapp2-sailraceapp2Tests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-sailraceapp2-sailraceapp2Tests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		D5C45D632BCEFCB700BE7E3C /* AntDesign.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D5B10EB52BC9C3D000E44451 /* AntDesign.ttf */; };
+		D5C45D642BCEFCB700BE7E3C /* Entypo.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D5B10EB92BC9C3D000E44451 /* Entypo.ttf */; };
+		D5C45D652BCEFCB700BE7E3C /* EvilIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D5B10EB72BC9C3D000E44451 /* EvilIcons.ttf */; };
+		D5C45D662BCEFCB700BE7E3C /* FontAwesome.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D5B10EB82BC9C3D000E44451 /* FontAwesome.ttf */; };
+		D5C45D672BCEFCB700BE7E3C /* Ionicons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D5B10EBB2BC9C3D000E44451 /* Ionicons.ttf */; };
+		D5C45D682BCEFCB700BE7E3C /* MaterialCommunityIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D5B10EB62BC9C3D000E44451 /* MaterialCommunityIcons.ttf */; };
+		D5C45D692BCEFCB700BE7E3C /* MaterialIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D5B10EBA2BC9C3D000E44451 /* MaterialIcons.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -43,6 +50,13 @@
 		5DCACB8F33CDC322A6C60F78 /* libPods-sailraceapp2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-sailraceapp2.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = sailraceapp2/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-sailraceapp2-sailraceapp2Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-sailraceapp2-sailraceapp2Tests.release.xcconfig"; path = "Target Support Files/Pods-sailraceapp2-sailraceapp2Tests/Pods-sailraceapp2-sailraceapp2Tests.release.xcconfig"; sourceTree = "<group>"; };
+		D5B10EB52BC9C3D000E44451 /* AntDesign.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = AntDesign.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/AntDesign.ttf"; sourceTree = "<group>"; };
+		D5B10EB62BC9C3D000E44451 /* MaterialCommunityIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = MaterialCommunityIcons.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf"; sourceTree = "<group>"; };
+		D5B10EB72BC9C3D000E44451 /* EvilIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = EvilIcons.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/EvilIcons.ttf"; sourceTree = "<group>"; };
+		D5B10EB82BC9C3D000E44451 /* FontAwesome.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = FontAwesome.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/FontAwesome.ttf"; sourceTree = "<group>"; };
+		D5B10EB92BC9C3D000E44451 /* Entypo.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Entypo.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/Entypo.ttf"; sourceTree = "<group>"; };
+		D5B10EBA2BC9C3D000E44451 /* MaterialIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = MaterialIcons.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/MaterialIcons.ttf"; sourceTree = "<group>"; };
+		D5B10EBB2BC9C3D000E44451 /* Ionicons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Ionicons.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/Ionicons.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -86,6 +100,7 @@
 		13B07FAE1A68108700A75B9A /* sailraceapp2 */ = {
 			isa = PBXGroup;
 			children = (
+				D53A6F022BC5E7990099D73C /* Fonts */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -146,6 +161,20 @@
 				89C6BE57DB24E9ADA2F236DE /* Pods-sailraceapp2-sailraceapp2Tests.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		D53A6F022BC5E7990099D73C /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				D5B10EB52BC9C3D000E44451 /* AntDesign.ttf */,
+				D5B10EB92BC9C3D000E44451 /* Entypo.ttf */,
+				D5B10EB72BC9C3D000E44451 /* EvilIcons.ttf */,
+				D5B10EB82BC9C3D000E44451 /* FontAwesome.ttf */,
+				D5B10EBB2BC9C3D000E44451 /* Ionicons.ttf */,
+				D5B10EB62BC9C3D000E44451 /* MaterialCommunityIcons.ttf */,
+				D5B10EBA2BC9C3D000E44451 /* MaterialIcons.ttf */,
+			);
+			path = Fonts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -241,6 +270,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D5C45D632BCEFCB700BE7E3C /* AntDesign.ttf in Resources */,
+				D5C45D642BCEFCB700BE7E3C /* Entypo.ttf in Resources */,
+				D5C45D652BCEFCB700BE7E3C /* EvilIcons.ttf in Resources */,
+				D5C45D662BCEFCB700BE7E3C /* FontAwesome.ttf in Resources */,
+				D5C45D672BCEFCB700BE7E3C /* Ionicons.ttf in Resources */,
+				D5C45D682BCEFCB700BE7E3C /* MaterialCommunityIcons.ttf in Resources */,
+				D5C45D692BCEFCB700BE7E3C /* MaterialIcons.ttf in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 			);

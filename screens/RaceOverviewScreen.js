@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {View, Text, StyleSheet, Button} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Entypo';
 
 const RaceOverviewScreen = ({route}) => {
   const {
@@ -14,6 +14,7 @@ const RaceOverviewScreen = ({route}) => {
 
   const [timer, setTimer] = useState('10:00');
   const intervalRef = useRef(null);
+  const [windDirectionRotation, setWindDirectionRotation] = useState(0);
 
   useEffect(() => {
     if (passToOverview && raceStartTime) {
@@ -47,6 +48,13 @@ const RaceOverviewScreen = ({route}) => {
     }
   }, [raceStartTime, passToOverview]);
 
+  useEffect(() => {
+    if (windDirection) {
+      const rotation = windDirection % 360; // Ensure rotation is within 0 to 359 degrees
+      setWindDirectionRotation(rotation);
+    }
+  }, [windDirection]);
+
   const startTimer = () => {
     clearInterval(intervalRef.current);
     setTimer('10:00');
@@ -69,18 +77,22 @@ const RaceOverviewScreen = ({route}) => {
 
   return (
     <View style={styles.container}>
-      {/* Legend */}
+      {console.log('Attempting to render the Direction, Air, icon')}
+      <View style={styles.compassContainer}>
+        <Icon
+          name="direction"
+          size={50}
+          color="blue"
+          style={{transform: [{rotate: `${windDirectionRotation}deg`}]}}
+        />
+      </View>
       <View style={styles.legendContainer}>
         <Text style={styles.legendItem}>Windward</Text>
         <Text style={styles.legendItem}>Leeward</Text>
         <Text style={styles.legendItem}>Starting Line</Text>
       </View>
-
-      {/* Race Course Grid */}
       <View style={styles.raceCourseGrid}>
-        {/* Water */}
         <View style={styles.water} />
-        {/* Grid Lines */}
         {[...Array(10)].map((_, index) => (
           <View
             key={index}
@@ -93,25 +105,20 @@ const RaceOverviewScreen = ({route}) => {
             style={[styles.gridLine, styles.horizontalGridLine]}
           />
         ))}
-        {/* Markers */}
         <View style={[styles.marker, styles.markerWindward]} />
         <View style={[styles.marker, styles.markerLeeward]} />
         <View style={[styles.marker, styles.markerStartLine]} />
-        {/* Start Line */}
         <View style={styles.startLine} />
       </View>
-
-      {/* Weather Info */}
       <View style={styles.weatherInfo}>
         <View style={styles.weatherItem}>
-          <Icon name="weather-windy" size={24} color="black" />
           <Text style={styles.weatherText}>
             Wind: {windSpeed ? windSpeed.toFixed(2) : 'N/A'} knots{' '}
             {windDirection ? windDirection.toFixed(2) : 'N/A'}°
           </Text>
         </View>
         <View style={styles.weatherItem}>
-          <Icon name="waves" size={24} color="black" />
+          <Icon name="air" size={25} color="black" />
           <Text style={styles.weatherText}>
             Tide: {tideSpeed ? tideSpeed.toFixed(2) : 'N/A'} knots{' '}
             {tideDirection ? tideDirection.toFixed(2) : 'N/A'}°
@@ -130,6 +137,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFF',
+  },
+  compassContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
   },
   legendContainer: {
     flexDirection: 'row',
