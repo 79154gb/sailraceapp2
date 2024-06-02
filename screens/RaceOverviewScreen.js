@@ -49,7 +49,7 @@ const RaceOverviewScreen = ({route}) => {
   }, [raceStartTime, passToOverview]);
 
   useEffect(() => {
-    if (windDirection) {
+    if (windDirection !== undefined) {
       const rotation = windDirection % 360; // Ensure rotation is within 0 to 359 degrees
       setWindDirectionRotation(rotation);
     }
@@ -77,38 +77,63 @@ const RaceOverviewScreen = ({route}) => {
 
   return (
     <View style={styles.container}>
-      {console.log('Attempting to render the Direction, Air, icon')}
       <View style={styles.compassContainer}>
         <Icon
-          name="direction"
-          size={50}
-          color="blue"
+          name="arrow-up"
+          size={30}
+          color="black"
           style={{transform: [{rotate: `${windDirectionRotation}deg`}]}}
         />
       </View>
       <View style={styles.legendContainer}>
-        <Text style={styles.legendItem}>Windward</Text>
-        <Text style={styles.legendItem}>Leeward</Text>
-        <Text style={styles.legendItem}>Starting Line</Text>
+        {['Windward', 'Leeward', 'Starting Line'].map((label, index) => (
+          <Text key={index} style={styles.legendItem}>
+            {label}
+          </Text>
+        ))}
       </View>
       <View style={styles.raceCourseGrid}>
         <View style={styles.water} />
         {[...Array(10)].map((_, index) => (
           <View
             key={index}
-            style={[styles.gridLine, {left: `${10 * (index + 1)}%`}]}
+            style={[
+              styles.gridLine,
+              styles.verticalGridLine,
+              {left: `${(100 / 10) * (index + 1)}%`},
+            ]}
           />
         ))}
         {[...Array(10)].map((_, index) => (
           <View
             key={index}
-            style={[styles.gridLine, styles.horizontalGridLine]}
+            style={[
+              styles.gridLine,
+              styles.horizontalGridLine,
+              {top: `${(100 / 10) * (index + 1)}%`},
+            ]}
           />
         ))}
-        <View style={[styles.marker, styles.markerWindward]} />
-        <View style={[styles.marker, styles.markerLeeward]} />
-        <View style={[styles.marker, styles.markerStartLine]} />
-        <View style={styles.startLine} />
+        <View
+          style={[styles.marker, styles.markerStart, {top: '20%', left: '50%'}]}
+        />
+        <View
+          style={[
+            styles.marker,
+            styles.markerWindward,
+            {top: '10%', left: '50%'},
+          ]}
+        />
+        <View
+          style={[styles.marker, styles.markerReach, {top: '50%', left: '70%'}]}
+        />
+        <View
+          style={[
+            styles.marker,
+            styles.markerLeeward,
+            {top: '90%', left: '20%'},
+          ]}
+        />
       </View>
       <View style={styles.weatherInfo}>
         <View style={styles.weatherItem}>
@@ -161,22 +186,22 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginTop: 20,
   },
-  water: {
-    flex: 1,
-    backgroundColor: 'lightblue',
-  },
   gridLine: {
     position: 'absolute',
     borderColor: 'black',
     borderWidth: 0.5,
-    width: '100%',
-    height: 0,
-    top: '10%',
   },
   horizontalGridLine: {
+    width: '100%',
+    height: 0,
+  },
+  verticalGridLine: {
     height: '100%',
-    width: 0.5,
-    left: '10%',
+    width: 0,
+  },
+  water: {
+    flex: 1,
+    backgroundColor: 'lightblue',
   },
   marker: {
     width: 10,
@@ -186,26 +211,15 @@ const styles = StyleSheet.create({
   },
   markerWindward: {
     backgroundColor: 'red',
-    left: '10%',
-    top: '10%',
+  },
+  markerReach: {
+    backgroundColor: 'yellow',
   },
   markerLeeward: {
     backgroundColor: 'green',
-    left: '60%',
-    top: '10%',
   },
-  markerStartLine: {
+  markerStart: {
     backgroundColor: 'blue',
-    left: '35%',
-    top: '65%',
-  },
-  startLine: {
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    width: 2,
-    height: '100%',
-    backgroundColor: 'purple',
   },
   weatherInfo: {
     position: 'absolute',
@@ -215,7 +229,7 @@ const styles = StyleSheet.create({
   weatherItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 20,
+    marginBottom: 5,
   },
   weatherText: {
     fontSize: 16,
