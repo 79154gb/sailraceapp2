@@ -50,6 +50,7 @@
 		5DCACB8F33CDC322A6C60F78 /* libPods-sailraceapp2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-sailraceapp2.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = sailraceapp2/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-sailraceapp2-sailraceapp2Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-sailraceapp2-sailraceapp2Tests.release.xcconfig"; path = "Target Support Files/Pods-sailraceapp2-sailraceapp2Tests/Pods-sailraceapp2-sailraceapp2Tests.release.xcconfig"; sourceTree = "<group>"; };
+		D518A17A2C0FB0A500534C50 /* Feather.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Feather.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/Feather.ttf"; sourceTree = "<group>"; };
 		D5B10EB52BC9C3D000E44451 /* AntDesign.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = AntDesign.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/AntDesign.ttf"; sourceTree = "<group>"; };
 		D5B10EB62BC9C3D000E44451 /* MaterialCommunityIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = MaterialCommunityIcons.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf"; sourceTree = "<group>"; };
 		D5B10EB72BC9C3D000E44451 /* EvilIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = EvilIcons.ttf; path = "../../node_modules/react-native-vector-icons/Fonts/EvilIcons.ttf"; sourceTree = "<group>"; };
@@ -166,6 +167,7 @@
 		D53A6F022BC5E7990099D73C /* Fonts */ = {
 			isa = PBXGroup;
 			children = (
+				D518A17A2C0FB0A500534C50 /* Feather.ttf */,
 				D5B10EB52BC9C3D000E44451 /* AntDesign.ttf */,
 				D5B10EB92BC9C3D000E44451 /* Entypo.ttf */,
 				D5B10EB72BC9C3D000E44451 /* EvilIcons.ttf */,
