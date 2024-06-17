@@ -14,7 +14,7 @@ const DinghyModelsScreen = ({navigation}) => {
   const handleModelSelect = itemValue => {
     console.log('Selected model:', itemValue);
     setModel(itemValue);
-    navigation.navigate('RaceSetup', {selectedModel: itemValue});
+    navigation.navigate('RaceOverview', {selectedModel: itemValue});
   };
 
   return (

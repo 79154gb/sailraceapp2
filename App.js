@@ -5,7 +5,6 @@ import HomeScreen from './screens/HomeScreen';
 import SailboatCategoriesScreen from './screens/SailboatCategoriesScreen';
 import DinghyManufacturerScreen from './screens/DinghyManufacturerScreen';
 import DinghyModelsScreen from './screens/DinghyModelsScreen';
-import RaceSetupScreen from './screens/RaceSetupScreen';
 import RaceCourseScreen from './screens/RaceCourseScreen'; // Import the new screen
 import RaceOverviewScreen from './screens/RaceOverviewScreen';
 
@@ -29,11 +28,6 @@ const App = () => {
           name="DinghyModels"
           component={DinghyModelsScreen}
           options={{title: 'Dinghy Models'}}
-        />
-        <Stack.Screen
-          name="RaceSetup"
-          component={RaceSetupScreen}
-          options={{title: 'Race Setup'}}
         />
         <Stack.Screen
           name="RaceCourse"
