@@ -213,11 +213,12 @@ const RaceOverviewScreen = () => {
         coordinate: event.nativeEvent.coordinate,
         key: `${markers.length}`,
         type: selectedMarkerType,
-        color: selectedMarkerType.color,
+        color: markerTypes.find(type => type.value === selectedMarkerType)
+          ?.color,
       };
       setMarkers([...markers, newMarker]);
       console.log(
-        `Marker set: ${selectedMarkerType.label}, Latitude: ${newMarker.coordinate.latitude}, Longitude: ${newMarker.coordinate.longitude}`,
+        `Marker set: ${selectedMarkerType}, Latitude: ${newMarker.coordinate.latitude}, Longitude: ${newMarker.coordinate.longitude}`,
       );
       setSelectedMarkerType(null);
     } else if (selectingStartLine) {
@@ -278,7 +279,7 @@ const RaceOverviewScreen = () => {
     <TouchableOpacity
       style={styles.modalItem}
       onPress={() => {
-        setSelectedMarkerType(item);
+        setSelectedMarkerType(item.value);
       }}>
       <Text>{item.label}</Text>
     </TouchableOpacity>
@@ -297,11 +298,12 @@ const RaceOverviewScreen = () => {
         },
         key: `${markers.length}`,
         type: selectedMarkerType,
-        color: selectedMarkerType.color,
+        color: markerTypes.find(type => type.value === selectedMarkerType)
+          ?.color,
       };
       setMarkers([...markers, newMarker]);
       console.log(
-        `Marker set at cross: ${selectedMarkerType.label}, Latitude: ${newMarker.coordinate.latitude}, Longitude: ${newMarker.coordinate.longitude}`,
+        `Marker set at cross: ${selectedMarkerType}, Latitude: ${newMarker.coordinate.latitude}, Longitude: ${newMarker.coordinate.longitude}`,
       );
       setSelectedMarkerType(null);
     }
@@ -418,7 +420,9 @@ const RaceOverviewScreen = () => {
               draggable
               onDragEnd={event => handleMarkerDragEnd(event, index)}
               title={`Marker ${marker.key}`}
-              description={marker.type.label}
+              description={
+                markerTypes.find(type => type.value === marker.type)?.label
+              }
             />
           ))}
 
