@@ -4,9 +4,8 @@ module.exports = {
   parserOptions: {
     requireConfigFile: false,
     babelOptions: {
-      presets: ['@babel/preset-react']
+      presets: ['@babel/preset-react'],
     },
-    parser: '@babel/eslint-parser'
-  }
+    parser: '@babel/eslint-parser',
+  },
 };
-

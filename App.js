@@ -7,13 +7,17 @@ import DinghyManufacturerScreen from './screens/DinghyManufacturerScreen';
 import DinghyModelsScreen from './screens/DinghyModelsScreen';
 import RaceCourseScreen from './screens/RaceCourseScreen'; // Import the new screen
 import RaceOverviewScreen from './screens/RaceOverviewScreen';
+import LoginScreen from './screens/LoginScreen'; // Import the LoginScreen
+import SignUpScreen from './screens/SignUpScreen'; // Import the SignUpScreen
 
 const Stack = createStackNavigator();
 
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="Login">
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen
           name="SailboatCategories"

@@ -1,15 +1,28 @@
-import React, {useState} from 'react';
-import {View, StyleSheet} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {View, StyleSheet, ActivityIndicator, ScrollView} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import {getModelsByManufacturer} from './api'; // Import the API function
 
-const DinghyModelsScreen = ({navigation}) => {
+const DinghyModelsScreen = ({route, navigation}) => {
+  const {selectedManufacturer} = route.params; // Retrieve the selected manufacturer from navigation params
   const [open, setOpen] = useState(false);
   const [model, setModel] = useState(null);
-  const [items, setItems] = useState([
-    {label: '5.3', value: '5.3'},
-    {label: '4.3', value: '4.3'}, // Example manufacturer option
-    // Add more manufacturer options as needed
-  ]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const models = await getModelsByManufacturer(selectedManufacturer);
+        setItems(models);
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+      }
+    };
+
+    fetchModels();
+  }, [selectedManufacturer]);
 
   const handleModelSelect = itemValue => {
     console.log('Selected model:', itemValue);
@@ -17,24 +30,41 @@ const DinghyModelsScreen = ({navigation}) => {
     navigation.navigate('RaceOverview', {selectedModel: itemValue});
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <DropDownPicker
-        open={open}
-        value={model}
-        items={items}
-        setValue={setModel}
-        setItems={setItems}
-        setOpen={setOpen}
-        defaultValue={model}
-        placeholder="Select model"
-        onChangeValue={item => handleModelSelect(item)}
-        containerStyle={styles.dropDownContainer}
-        style={styles.dropDown}
-        itemStyle={styles.dropDownItem}
-        dropDownStyle={styles.dropDownDropdown}
-        labelStyle={styles.dropDownLabel}
-      />
+      <ScrollView
+        style={{flex: 1, width: '100%', alignSelf: 'stretch'}}
+        contentContainerStyle={{flexGrow: 1, alignItems: 'center'}}>
+        <DropDownPicker
+          open={open}
+          value={model}
+          items={items}
+          setOpen={setOpen}
+          setValue={setModel}
+          setItems={setItems}
+          containerStyle={styles.dropDownContainer}
+          style={styles.dropDown}
+          itemStyle={styles.dropDownItem}
+          dropDownStyle={styles.dropDownDropdown}
+          labelStyle={styles.dropDownLabel}
+          placeholder="Select model"
+          onChangeValue={item => handleModelSelect(item)}
+          listMode="MODAL"
+          modalProps={{
+            animationType: 'slide',
+            hardwareAccelerated: true,
+            presentationStyle: 'fullScreen',
+          }}
+        />
+      </ScrollView>
     </View>
   );
 };
@@ -46,7 +76,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#222831',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   dropDownContainer: {
+    width: '80%',
     height: 40,
     marginBottom: 20,
   },
