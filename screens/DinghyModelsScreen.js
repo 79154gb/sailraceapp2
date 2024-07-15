@@ -1,10 +1,17 @@
 import React, {useState, useEffect} from 'react';
-import {View, StyleSheet, ActivityIndicator, ScrollView} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  Alert,
+} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {getModelsByManufacturer} from './api'; // Import the API function
+import {getModelsByManufacturer, addBoatToUserAccount} from './api'; // Import the API functions
 
 const DinghyModelsScreen = ({route, navigation}) => {
-  const {selectedManufacturer} = route.params; // Retrieve the selected manufacturer from navigation params
+  const {selectedManufacturer, userId} = route.params; // Retrieve the selected manufacturer and userId from navigation params
   const [open, setOpen] = useState(false);
   const [model, setModel] = useState(null);
   const [items, setItems] = useState([]);
@@ -24,10 +31,34 @@ const DinghyModelsScreen = ({route, navigation}) => {
     fetchModels();
   }, [selectedManufacturer]);
 
-  const handleModelSelect = itemValue => {
+  const handleModelSelect = async itemValue => {
     console.log('Selected model:', itemValue);
     setModel(itemValue);
-    navigation.navigate('RaceOverview', {selectedModel: itemValue});
+
+    try {
+      const response = await addBoatToUserAccount(
+        userId,
+        selectedManufacturer,
+        itemValue,
+      );
+      console.log('Response from addBoatToUserAccount:', response);
+
+      if (
+        response.message === 'Boat already exists in user account' ||
+        response.message === 'Boat added to user account successfully'
+      ) {
+        navigation.navigate('UserBoatDetails', {
+          userId,
+          manufacturer: selectedManufacturer,
+          model: itemValue,
+        });
+      } else {
+        throw new Error('Unexpected response');
+      }
+    } catch (error) {
+      console.log('Error adding boat to user account:', error);
+      Alert.alert('Error', 'Failed to add boat to user account');
+    }
   };
 
   if (loading) {
@@ -57,7 +88,7 @@ const DinghyModelsScreen = ({route, navigation}) => {
           labelStyle={styles.dropDownLabel}
           placeholder="Select model"
           onChangeValue={item => handleModelSelect(item)}
-          listMode="MODAL"
+          listMode="SCROLLVIEW"
           modalProps={{
             animationType: 'slide',
             hardwareAccelerated: true,

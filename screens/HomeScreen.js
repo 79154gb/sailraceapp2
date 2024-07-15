@@ -2,9 +2,16 @@ import React from 'react';
 import {View, Text, Image, StyleSheet, TouchableOpacity} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
-const HomeScreen = ({navigation}) => {
+const HomeScreen = ({navigation, route}) => {
+  const {userId} = route.params; // Retrieve userId from navigation params
+  console.log('User ID in HomeScreen:', userId); // Log user ID
+
   const navigateToSailboatCategories = () => {
-    navigation.navigate('SailboatCategories');
+    navigation.navigate('SailboatCategories', {userId});
+  };
+
+  const navigateToBoatShed = () => {
+    navigation.navigate('UserBoatDetails', {userId});
   };
 
   return (
@@ -24,6 +31,11 @@ const HomeScreen = ({navigation}) => {
         style={styles.button}
         onPress={navigateToSailboatCategories}>
         <Text style={styles.buttonText}>Select Your Boat</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.button, styles.boatShedButton]}
+        onPress={navigateToBoatShed}>
+        <Text style={styles.buttonText}>Your Boat Shed</Text>
       </TouchableOpacity>
     </View>
   );
@@ -69,6 +81,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     position: 'absolute',
     top: 150,
+  },
+  boatShedButton: {
+    top: 210, // Adjust this value to create space between the buttons
   },
   buttonText: {
     color: '#9af4fd',

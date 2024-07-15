@@ -22,7 +22,8 @@ const LoginScreen = ({navigation}) => {
       // Handle successful login, e.g., save token, navigate to home screen
       if (response.token) {
         // Save token or handle login success
-        navigation.navigate('Home');
+        console.log('User ID:', response.userId); // Log user ID
+        navigation.navigate('Home', {userId: response.userId});
       } else {
         Alert.alert('Login Failed', 'Invalid response from server');
       }

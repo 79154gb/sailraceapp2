@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   Text,
   FlatList,
-  Button,
+  Alert,
 } from 'react-native';
 import MapView, {Marker, Polyline} from 'react-native-maps';
 import Icon from 'react-native-vector-icons/Entypo';
@@ -39,6 +39,80 @@ const getSpeedFromPolars = angle => {
   }
   return 5; // Default speed for angles not covered in the sample polars
 };
+
+const CustomButton = ({title, onPress, style, textStyle}) => (
+  <TouchableOpacity style={[buttonStyles.button, style]} onPress={onPress}>
+    <Text style={[buttonStyles.buttonText, textStyle]}>{title}</Text>
+  </TouchableOpacity>
+);
+
+const buttonStyles = StyleSheet.create({
+  button: {
+    backgroundColor: '#007bff', // Default button color
+    padding: 5,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginVertical: 5,
+  },
+  buttonText: {
+    color: '#fff', // Default text color
+    fontSize: 11, // Default font size
+  },
+});
+
+const InfoRow = ({iconName, label, value, style}) => (
+  <View style={styles.infoItem}>
+    <Icon name={iconName} size={20} color="black" />
+    <Text style={[styles.infoText, style]}>{`${label}: ${value}`}</Text>
+  </View>
+);
+
+const MarkerPicker = ({
+  markerTypes,
+  selectedMarkerType,
+  setSelectedMarkerType,
+  placeMarkerAtCross,
+  setMarkers,
+}) => (
+  <View style={styles.markerPicker}>
+    <FlatList
+      horizontal
+      data={markerTypes}
+      renderItem={({item}) => (
+        <TouchableOpacity
+          style={styles.modalItem}
+          onPress={() => setSelectedMarkerType(item.value)}>
+          <Text>{item.label}</Text>
+        </TouchableOpacity>
+      )}
+      keyExtractor={item => item.value}
+    />
+    {selectedMarkerType && (
+      <CustomButton title="Place Marker Here" onPress={placeMarkerAtCross} />
+    )}
+    <CustomButton title="Clear Markers" onPress={() => setMarkers([])} />
+  </View>
+);
+
+const TimerControls = ({
+  timerMinutes,
+  setTimerMinutes,
+  timerRunning,
+  startTimer,
+  resetTimer,
+}) => (
+  <View style={styles.timerControls}>
+    <CustomButton
+      title="Set Timer"
+      onPress={() => setTimerMinutes(timerMinutes < 10 ? timerMinutes + 1 : 1)}
+    />
+    <CustomButton
+      title={timerRunning ? 'Stop Timer' : 'Start Timer'}
+      onPress={timerRunning ? resetTimer : startTimer}
+    />
+    <CustomButton title="Reset Timer" onPress={resetTimer} />
+  </View>
+);
 
 const RaceOverviewScreen = () => {
   const [markers, setMarkers] = useState([]);
@@ -197,7 +271,8 @@ const RaceOverviewScreen = () => {
   };
 
   useEffect(() => {
-    fetchWindData();
+    const debounceFetchWindData = setTimeout(fetchWindData, 500);
+    return () => clearTimeout(debounceFetchWindData);
   }, [visibleRegion, date, time]);
 
   const formatDate = formattedDate => {
@@ -275,16 +350,6 @@ const RaceOverviewScreen = () => {
     setVisibleRegion(region);
   };
 
-  const renderModalItem = ({item}) => (
-    <TouchableOpacity
-      style={styles.modalItem}
-      onPress={() => {
-        setSelectedMarkerType(item.value);
-      }}>
-      <Text>{item.label}</Text>
-    </TouchableOpacity>
-  );
-
   const placeMarkerAtCross = () => {
     if (
       selectedMarkerType &&
@@ -331,7 +396,10 @@ const RaceOverviewScreen = () => {
 
   const calculateRoute = () => {
     if (sequenceOfMarks.length < 2) {
-      console.error('At least two marks are needed to calculate the route');
+      Alert.alert(
+        'Error',
+        'At least two marks are needed to calculate the route',
+      );
       return;
     }
 
@@ -446,7 +514,7 @@ const RaceOverviewScreen = () => {
                     },
                   ],
                 }}>
-                <Icon name="arrow-up" size={10} color="white" />
+                <Icon name="arrow-up" size={9} color="white" />
               </View>
             </Marker>
           ))}
@@ -469,7 +537,7 @@ const RaceOverviewScreen = () => {
           <Polyline
             coordinates={boatTrail}
             strokeColor="green"
-            strokeWidth={2}
+            strokeWidth={3}
           />
 
           {startLine.marker1 && startLine.marker2 && (
@@ -521,92 +589,91 @@ const RaceOverviewScreen = () => {
           </View>
 
           <View style={styles.row}>
-            <View style={styles.infoItem}>
-              <Icon1 name="wind" size={20} color="black" />
-              <Text style={styles.infoText}>
-                Wind:{' '}
-                {windInfo.speed !== null
+            <InfoRow
+              iconName="wind"
+              label="Wind"
+              value={
+                windInfo.speed !== null
                   ? `${windInfo.speed} kts ${windInfo.direction}°`
-                  : 'N/A'}
-              </Text>
-            </View>
-
-            <View style={styles.infoItem}>
-              <Icon name="water" size={20} color="black" />
-              <Text style={styles.infoText}>
-                Tide:{' '}
-                {tideInfo.speed !== null
-                  ? `${tideInfo.speed} kts ${tideInfo.direction}°`
-                  : 'N/A'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.row}>
-            <View style={styles.infoItem}>
-              <Icon name="location-pin" size={20} color="black" />
-              <Text style={styles.infoText}>
-                Lat:{' '}
-                {centerCoordinate.latitude !== null
-                  ? centerCoordinate.latitude.toFixed(4)
-                  : 'N/A'}
-                , Lon:{' '}
-                {centerCoordinate.longitude !== null
-                  ? centerCoordinate.longitude.toFixed(4)
-                  : 'N/A'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.row}>
-            <View style={styles.infoItem}>
-              <Icon name="timer" size={20} color="black" />
-              <Text style={styles.infoText}>
-                Timer:{' '}
-                {timer !== null
-                  ? `${Math.floor(timer / 60)}:${timer % 60}`
-                  : `${timerMinutes} mins`}
-              </Text>
-            </View>
-            <View style={styles.timerControls}>
-              <Button
-                title="Set Timer"
-                onPress={() =>
-                  setTimerMinutes(timerMinutes < 10 ? timerMinutes + 1 : 1)
-                }
-              />
-              <Button
-                title={timerRunning ? 'Stop Timer' : 'Start Timer'}
-                onPress={timerRunning ? resetTimer : startTimer}
-              />
-              <Button title="Reset Timer" onPress={resetTimer} />
-            </View>
-          </View>
-
-          <View style={styles.markerPicker}>
-            <FlatList
-              horizontal
-              data={markerTypes}
-              renderItem={renderModalItem}
-              keyExtractor={item => item.value}
+                  : 'N/A'
+              }
+              style={styles.infoTextLarge}
             />
-            {selectedMarkerType && (
-              <Button title="Place Marker Here" onPress={placeMarkerAtCross} />
-            )}
-            <Button title="Clear Markers" onPress={() => setMarkers([])} />
+
+            <InfoRow
+              iconName="water"
+              label="Tide"
+              value={
+                tideInfo.speed !== null
+                  ? `${tideInfo.speed} kts ${tideInfo.direction}°`
+                  : 'N/A'
+              }
+              style={styles.infoTextLarge}
+            />
           </View>
 
           <View style={styles.row}>
-            <Button
+            <InfoRow
+              iconName="location-pin"
+              label="Lat"
+              value={
+                centerCoordinate.latitude !== null
+                  ? centerCoordinate.latitude.toFixed(4)
+                  : 'N/A'
+              }
+              style={styles.infoTextLarge}
+            />
+            <InfoRow
+              iconName="location-pin"
+              label="Lon"
+              value={
+                centerCoordinate.longitude !== null
+                  ? centerCoordinate.longitude.toFixed(4)
+                  : 'N/A'
+              }
+              style={styles.infoTextLarge}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <InfoRow
+              iconName="timer"
+              label="Timer"
+              value={
+                timer !== null
+                  ? `${Math.floor(timer / 60)}:${timer % 60}`
+                  : `${timerMinutes} mins`
+              }
+              style={styles.infoTextLarge}
+            />
+            <TimerControls
+              timerMinutes={timerMinutes}
+              setTimerMinutes={setTimerMinutes}
+              timerRunning={timerRunning}
+              startTimer={startTimer}
+              resetTimer={resetTimer}
+            />
+          </View>
+
+          <MarkerPicker
+            markerTypes={markerTypes}
+            selectedMarkerType={selectedMarkerType}
+            setSelectedMarkerType={setSelectedMarkerType}
+            placeMarkerAtCross={placeMarkerAtCross}
+            setMarkers={setMarkers}
+          />
+
+          <View style={styles.row}>
+            <CustomButton
               title="Define Start Line"
               onPress={() => setSelectingStartLine(true)}
             />
-            <Button
+            <CustomButton
               title="Set Sequence of Marks"
               onPress={() => setSelectingSequence(true)}
             />
             {selectingSequence && (
-              <Button
+              <CustomButton
                 title="Finish Sequence"
                 onPress={() => setSelectingSequence(false)}
               />
@@ -614,7 +681,7 @@ const RaceOverviewScreen = () => {
           </View>
 
           <View style={styles.row}>
-            <Button
+            <CustomButton
               title={simulationRunning ? 'Stop Simulation' : 'Start Simulation'}
               onPress={simulationRunning ? resetSimulation : startSimulation}
             />
@@ -693,6 +760,9 @@ const styles = StyleSheet.create({
   infoText: {
     marginLeft: 5,
     fontSize: 12,
+  },
+  infoTextLarge: {
+    fontSize: 11,
   },
   clearButtonContainer: {
     position: 'absolute',

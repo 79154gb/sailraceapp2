@@ -2,10 +2,13 @@ import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
-const SailboatCategoriesScreen = ({navigation}) => {
+const SailboatCategoriesScreen = ({navigation, route}) => {
+  const {userId} = route.params; // Retrieve userId from navigation params
+  console.log('User ID in SailboatCategoriesScreen:', userId); // Log user ID
+
   const handleCategoryPress = category => {
     if (category === 'Dinghys') {
-      navigation.navigate('DinghyManufacturer'); // Navigate to DinghyManufacturer screen
+      navigation.navigate('DinghyManufacturer', {userId}); // Navigate to DinghyManufacturer screen
     } // Handle navigation to subcategories or other screens based on selected category
   };
 

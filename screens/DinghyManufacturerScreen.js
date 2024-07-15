@@ -3,7 +3,9 @@ import {View, StyleSheet, ActivityIndicator, ScrollView} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {getManufacturers} from './api'; // Import the API function
 
-const DinghyManufacturerScreen = ({navigation}) => {
+const DinghyManufacturerScreen = ({navigation, route}) => {
+  const {userId} = route.params; // Retrieve userId from navigation params
+  console.log('User ID in DinghyManufacturerScreen:', userId); // Log user ID
   const [open, setOpen] = useState(false);
   const [manufacturer, setManufacturer] = useState(null);
   const [items, setItems] = useState([]);
@@ -27,7 +29,10 @@ const DinghyManufacturerScreen = ({navigation}) => {
     console.log('Selected manufacturer:', itemValue);
     setManufacturer(itemValue);
     if (itemValue) {
-      navigation.navigate('DinghyModels', {selectedManufacturer: itemValue}); // Pass selected manufacturer
+      navigation.navigate('DinghyModels', {
+        selectedManufacturer: itemValue,
+        userId,
+      }); // Pass selected manufacturer and userId
     }
   };
 
