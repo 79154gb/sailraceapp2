@@ -5,9 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
-  Button,
+  TouchableOpacity,
   Alert,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {getBoatPolars, updateBoatPolars} from './api'; // Ensure the path is correct
 
 const BoatPolarsScreen = ({route, navigation}) => {
@@ -58,6 +59,11 @@ const BoatPolarsScreen = ({route, navigation}) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <LinearGradient
+        colors={['#222831', '#37414f']}
+        style={styles.background}
+      />
+      <Text style={styles.header}>Boat Polars</Text>
       {polars.map((polar, index) => (
         <View key={index} style={styles.polarContainer}>
           <Text style={styles.label}>Wind Speed:</Text>
@@ -73,7 +79,6 @@ const BoatPolarsScreen = ({route, navigation}) => {
             value={polar.angle}
             onChangeText={text => handleChange(index, 'angle', text)}
           />
-
           <Text style={styles.label}>Speed:</Text>
           <TextInput
             style={styles.input}
@@ -82,11 +87,16 @@ const BoatPolarsScreen = ({route, navigation}) => {
           />
         </View>
       ))}
-      <Button title="Save Boat Polars" onPress={handleUpdate} />
-      <Button
-        title="Proceed to Race Overview"
-        onPress={() => navigation.navigate('RaceOverview')}
-      />
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={handleUpdate}>
+          <Text style={styles.buttonText}>Save Boat Polars</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('RaceOverview')}>
+          <Text style={styles.buttonText}>Proceed to Race Overview</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
@@ -95,11 +105,26 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
+    backgroundColor: '#222831',
+  },
+  background: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#9af4fd',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   polarContainer: {
     marginBottom: 20,
@@ -107,14 +132,33 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 10,
+    color: '#9af4fd',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 10,
     borderRadius: 5,
-    marginBottom: 10,
+    marginTop: 5,
+    backgroundColor: '#FFF',
+  },
+  buttonContainer: {
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  button: {
+    backgroundColor: '#FFAC94',
+    padding: 10,
+    borderRadius: 10,
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  buttonText: {
+    color: '#9af4fd',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

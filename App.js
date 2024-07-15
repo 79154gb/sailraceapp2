@@ -5,11 +5,12 @@ import HomeScreen from './screens/HomeScreen';
 import SailboatCategoriesScreen from './screens/SailboatCategoriesScreen';
 import DinghyManufacturerScreen from './screens/DinghyManufacturerScreen';
 import DinghyModelsScreen from './screens/DinghyModelsScreen';
-import UserBoatDetailsScreen from './screens/UserBoatDetailsScreen'; // Import the new screen
+import UserBoatDetailsScreen from './screens/UserBoatDetailsScreen';
 import RaceOverviewScreen from './screens/RaceOverviewScreen';
-import LoginScreen from './screens/LoginScreen'; // Import the LoginScreen
-import SignUpScreen from './screens/SignUpScreen'; // Import the SignUpScreen
-import BoatPolarsScreen from './screens/BoatPolarsScreen'; // Import the BoatPolarsScreen
+import LoginScreen from './screens/LoginScreen';
+import SignUpScreen from './screens/SignUpScreen';
+import BoatPolarsScreen from './screens/BoatPolarsScreen';
+import YourBoatShedScreen from './screens/YourBoatShedScreen'; // Import the new screen
 
 const Stack = createStackNavigator();
 
@@ -44,8 +45,12 @@ const App = () => {
           component={UserBoatDetailsScreen}
           options={{title: 'Boat Details'}}
         />
+        <Stack.Screen
+          name="YourBoatShed"
+          component={YourBoatShedScreen}
+          options={{title: 'Your Boat Shed'}}
+        />
         <Stack.Screen name="RaceOverview" component={RaceOverviewScreen} />
-        {/* Add more screens as needed */}
       </Stack.Navigator>
     </NavigationContainer>
   );

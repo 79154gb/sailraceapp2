@@ -100,3 +100,15 @@ export const updateUserBoatDetails = async (userId, boatDetails) => {
     throw error;
   }
 };
+
+export const getUserBoats = async userId => {
+  try {
+    const response = await axios.get(
+      `http://localhost:3000/api/dinghy/user-boats/${userId}`,
+    );
+    return response.data.boats;
+  } catch (error) {
+    console.error('Error fetching user boats:', error);
+    throw error;
+  }
+};
