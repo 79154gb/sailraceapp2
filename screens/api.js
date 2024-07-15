@@ -112,3 +112,21 @@ export const getUserBoats = async userId => {
     throw error;
   }
 };
+
+export const deleteUserBoat = async (userId, manufacturer, modelName) => {
+  try {
+    const response = await axios.delete(
+      `http://localhost:3000/api/dinghy/user-boat-details/${userId}`,
+      {
+        data: {
+          manufacturer,
+          model_name: modelName,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting boat from user account:', error);
+    throw error;
+  }
+};
