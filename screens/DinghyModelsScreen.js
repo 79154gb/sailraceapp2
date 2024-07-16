@@ -4,7 +4,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
-  Text,
   Alert,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -21,9 +20,11 @@ const DinghyModelsScreen = ({route, navigation}) => {
     const fetchModels = async () => {
       try {
         const models = await getModelsByManufacturer(selectedManufacturer);
+        console.log('Fetched models:', models); // Log fetched models
         setItems(models);
         setLoading(false);
       } catch (error) {
+        console.error('Error fetching models:', error); // Log any errors
         setLoading(false);
       }
     };
@@ -47,10 +48,15 @@ const DinghyModelsScreen = ({route, navigation}) => {
         response.message === 'Boat already exists in user account' ||
         response.message === 'Boat added to user account successfully'
       ) {
+        const selectedModel = items.find(item => item.value === itemValue);
+        const modelId = selectedModel ? selectedModel.id : null; // Ensure you have the modelId
+        console.log('Retrieved modelId:', modelId);
+
         navigation.navigate('UserBoatDetails', {
           userId,
           manufacturer: selectedManufacturer,
           model: itemValue,
+          modelId, // Pass the modelId to the next screen
         });
       } else {
         throw new Error('Unexpected response');

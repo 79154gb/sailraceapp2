@@ -9,17 +9,45 @@ import {
   Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {getBoatPolars, updateBoatPolars} from './api'; // Ensure the path is correct
+import Orientation from 'react-native-orientation-locker'; // Import the library
+import {getBoatPolars, getUserBoatPolars, updateUserBoatPolars} from './api'; // Ensure the path is correct
 
 const BoatPolarsScreen = ({route, navigation}) => {
-  const {userId, manufacturer, model} = route.params; // Retrieve userId, manufacturer, and model from navigation params
+  const {userId, manufacturer, model, modelId} = route.params; // Retrieve userId, manufacturer, model, and modelId from navigation params
   const [polars, setPolars] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    Orientation.lockToLandscape(); // Lock the screen to landscape mode
+
     const fetchPolars = async () => {
       try {
-        const data = await getBoatPolars(manufacturer, model);
+        let data = await getUserBoatPolars(userId, manufacturer, model);
+        if (!data || data.length === 0) {
+          data = await getBoatPolars(manufacturer, model);
+        }
+        if (!data || data.length === 0) {
+          // If no data is found, initialize an empty table with empty strings
+          data = [
+            {label: 'Wind Speed', values: ['', '', '', '', '', '', '']},
+            {label: 'Beat Angle', values: ['', '', '', '', '', '', '']},
+            {label: 'Beat VMG', values: ['', '', '', '', '', '', '']},
+            {label: '52', values: ['', '', '', '', '', '', '']},
+            {label: '60', values: ['', '', '', '', '', '', '']},
+            {label: '70', values: ['', '', '', '', '', '', '']},
+            {label: '75', values: ['', '', '', '', '', '', '']},
+            {label: '80', values: ['', '', '', '', '', '', '']},
+            {label: '90', values: ['', '', '', '', '', '', '']},
+            {label: '110', values: ['', '', '', '', '', '', '']},
+            {label: '120', values: ['', '', '', '', '', '', '']},
+            {label: '135', values: ['', '', '', '', '', '', '']},
+            {label: '150', values: ['', '', '', '', '', '', '']},
+            {label: '165', values: ['', '', '', '', '', '', '']},
+            {label: '180', values: ['', '', '', '', '', '', '']},
+            {label: 'Run Angle', values: ['', '', '', '', '', '', '']},
+            {label: 'Run VMG', values: ['', '', '', '', '', '', '']},
+          ];
+        }
         setPolars(data);
         setLoading(false);
       } catch (error) {
@@ -29,19 +57,32 @@ const BoatPolarsScreen = ({route, navigation}) => {
     };
 
     fetchPolars();
-  }, [manufacturer, model]);
 
-  const handleChange = (index, key, value) => {
+    return () => {
+      Orientation.unlockAllOrientations(); // Unlock the orientation when the component unmounts
+    };
+  }, [manufacturer, model, userId]); // Dependencies array
+
+  const handleChange = (rowIndex, colIndex, value) => {
     const updatedPolars = [...polars];
-    updatedPolars[index][key] = value;
+    updatedPolars[rowIndex].values[colIndex] = value;
     setPolars(updatedPolars);
   };
 
   const handleUpdate = async () => {
     try {
-      for (const polar of polars) {
-        await updateBoatPolars(polar);
-      }
+      const formattedPolars = polars.map(polar => ({
+        label: polar.label,
+        manufacturer,
+        model_name: model,
+        model_id: modelId,
+        user_id: userId,
+        values: polar.values.map(value =>
+          value === '' ? null : parseFloat(value),
+        ), // Convert empty strings to null and ensure numbers
+      }));
+
+      await updateUserBoatPolars(userId, formattedPolars);
       Alert.alert('Success', 'Boat polars updated successfully');
     } catch (error) {
       console.error('Failed to update boat polars:', error);
@@ -64,36 +105,31 @@ const BoatPolarsScreen = ({route, navigation}) => {
         style={styles.background}
       />
       <Text style={styles.header}>Boat Polars</Text>
-      {polars.map((polar, index) => (
-        <View key={index} style={styles.polarContainer}>
-          <Text style={styles.label}>Wind Speed:</Text>
-          <TextInput
-            style={styles.input}
-            value={polar.wind_speed}
-            onChangeText={text => handleChange(index, 'wind_speed', text)}
-          />
-
-          <Text style={styles.label}>Angle:</Text>
-          <TextInput
-            style={styles.input}
-            value={polar.angle}
-            onChangeText={text => handleChange(index, 'angle', text)}
-          />
-          <Text style={styles.label}>Speed:</Text>
-          <TextInput
-            style={styles.input}
-            value={polar.speed}
-            onChangeText={text => handleChange(index, 'speed', text)}
-          />
-        </View>
-      ))}
+      <View style={styles.table}>
+        {polars.map((polar, rowIndex) => (
+          <View key={rowIndex} style={styles.row}>
+            <Text style={styles.label}>{polar.label}</Text>
+            {polar.values.map((value, colIndex) => (
+              <TextInput
+                key={colIndex}
+                style={styles.input}
+                value={value === null ? '' : value.toString()}
+                onChangeText={text => handleChange(rowIndex, colIndex, text)}
+                keyboardType="numeric" // Ensure numeric keyboard
+              />
+            ))}
+          </View>
+        ))}
+      </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={handleUpdate}>
           <Text style={styles.buttonText}>Save Boat Polars</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('RaceOverview')}>
+          onPress={() =>
+            navigation.navigate('RaceOverview', {userId, manufacturer, model})
+          }>
           <Text style={styles.buttonText}>Proceed to Race Overview</Text>
         </TouchableOpacity>
       </View>
@@ -126,39 +162,47 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
-  polarContainer: {
-    marginBottom: 20,
+  table: {
+    flexDirection: 'column',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#FFF',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
   },
   label: {
-    fontSize: 16,
+    flex: 1,
+    padding: 10,
     fontWeight: 'bold',
-    color: '#9af4fd',
+    color: '#000',
   },
   input: {
+    flex: 1,
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 10,
+    margin: 5,
     borderRadius: 5,
-    marginTop: 5,
     backgroundColor: '#FFF',
   },
   buttonContainer: {
     marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   button: {
     backgroundColor: '#FFAC94',
-    padding: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 10,
-    flex: 1,
-    alignItems: 'center',
-    marginHorizontal: 5,
+    marginBottom: 10,
   },
   buttonText: {
     color: '#9af4fd',
-    fontSize: 18,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

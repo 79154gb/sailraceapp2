@@ -52,9 +52,11 @@ export const getModelsByManufacturer = async manufacturer => {
     const response = await axios.get(
       `${API_URL}/api/dinghy/models/${manufacturer}`,
     );
-    return response.data.models.map(model => ({
+    console.log('Response from getModelsByManufacturer:', response.data); // Log the response for debugging
+    return response.data.models.map((model, index) => ({
       label: model,
       value: model,
+      id: index + 1, // Create a dummy id for now since the original response doesn't contain ids
     }));
   } catch (error) {
     console.error('Error fetching models:', error);
@@ -127,6 +129,46 @@ export const deleteUserBoat = async (userId, manufacturer, modelName) => {
     return response.data;
   } catch (error) {
     console.error('Error deleting boat from user account:', error);
+    throw error;
+  }
+};
+export const getBoatPolars = async (manufacturer, modelName) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/api/dinghy/polars?manufacturer=${encodeURIComponent(
+        manufacturer,
+      )}&modelName=${encodeURIComponent(modelName)}`,
+    );
+    return response.data.polars;
+  } catch (error) {
+    console.error('Error fetching boat polars:', error);
+    throw error;
+  }
+};
+
+export const getUserBoatPolars = async (userId, manufacturer, modelName) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/api/dinghy/user-polars/${userId}?manufacturer=${encodeURIComponent(
+        manufacturer,
+      )}&modelName=${encodeURIComponent(modelName)}`,
+    );
+    return response.data.userPolars;
+  } catch (error) {
+    console.error('Error fetching user boat polars:', error);
+    throw error;
+  }
+};
+
+export const updateUserBoatPolars = async (userId, polars) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/dinghy/user-polars/${userId}`,
+      {polars},
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user boat polars:', error);
     throw error;
   }
 };

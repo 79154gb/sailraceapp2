@@ -12,7 +12,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import {getUserBoatDetails, updateUserBoatDetails} from './api'; // Ensure the path is correct
 
 const UserBoatDetailsScreen = ({route, navigation}) => {
-  const {userId, manufacturer, model} = route.params; // Retrieve userId, manufacturer, and model from navigation params
+  const {userId, manufacturer, model, modelId} = route.params; // Retrieve userId, manufacturer, model, and modelId from navigation params
+  console.log('Received modelId in UserBoatDetailsScreen:', modelId); // Log received modelId
   const [boatDetails, setBoatDetails] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -185,9 +186,15 @@ const UserBoatDetailsScreen = ({route, navigation}) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() =>
-            navigation.navigate('BoatPolars', {userId, manufacturer, model})
-          }>
+          onPress={() => {
+            console.log('Passing modelId to BoatPolarsScreen:', modelId); // Log passing modelId
+            navigation.navigate('BoatPolars', {
+              userId,
+              manufacturer,
+              model,
+              modelId,
+            });
+          }}>
           <Text style={styles.buttonText}>Proceed to Boat Polars</Text>
         </TouchableOpacity>
       </View>
