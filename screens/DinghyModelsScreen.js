@@ -7,7 +7,7 @@ import {
   Alert,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {getModelsByManufacturer, addBoatToUserAccount} from './api'; // Import the API functions
+import {getModelsByManufacturer, addBoatToUserAccount} from '../api/api'; // Import the API functions
 
 const DinghyModelsScreen = ({route, navigation}) => {
   const {selectedManufacturer, userId} = route.params; // Retrieve the selected manufacturer and userId from navigation params
@@ -49,14 +49,14 @@ const DinghyModelsScreen = ({route, navigation}) => {
         response.message === 'Boat added to user account successfully'
       ) {
         const selectedModel = items.find(item => item.value === itemValue);
-        const modelId = selectedModel ? selectedModel.id : null; // Ensure you have the modelId
-        console.log('Retrieved modelId:', modelId);
+        const model_id = selectedModel ? selectedModel.id : null; // Ensure you have the modelId
+        console.log('Retrieved modelId:', model_id);
 
-        navigation.navigate('UserBoatDetails', {
+        navigation.navigate('UserBoatDetailsScreen', {
           userId,
           manufacturer: selectedManufacturer,
           model: itemValue,
-          modelId, // Pass the modelId to the next screen
+          model_id, // Pass the modelId to the next screen
         });
       } else {
         throw new Error('Unexpected response');

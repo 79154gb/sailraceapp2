@@ -4,21 +4,25 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import Orientation from 'react-native-orientation-locker'; // Import the library
-import {getBoatPolars, getUserBoatPolars, updateUserBoatPolars} from './api'; // Ensure the path is correct
+import Orientation from 'react-native-orientation-locker';
+import {
+  getBoatPolars,
+  getUserBoatPolars,
+  updateUserBoatPolars,
+} from '../api/api';
+import BoatPolarsComponent from '../components/BoatPolarsComponent';
 
 const BoatPolarsScreen = ({route, navigation}) => {
-  const {userId, manufacturer, model, modelId} = route.params; // Retrieve userId, manufacturer, model, and modelId from navigation params
+  const {userId, manufacturer, model, model_id} = route.params;
   const [polars, setPolars] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Orientation.lockToLandscape(); // Lock the screen to landscape mode
+    Orientation.lockToLandscape();
 
     const fetchPolars = async () => {
       try {
@@ -27,7 +31,6 @@ const BoatPolarsScreen = ({route, navigation}) => {
           data = await getBoatPolars(manufacturer, model);
         }
         if (!data || data.length === 0) {
-          // If no data is found, initialize an empty table with empty strings
           data = [
             {label: 'Wind Speed', values: ['', '', '', '', '', '', '']},
             {label: 'Beat Angle', values: ['', '', '', '', '', '', '']},
@@ -47,7 +50,118 @@ const BoatPolarsScreen = ({route, navigation}) => {
             {label: 'Run Angle', values: ['', '', '', '', '', '', '']},
             {label: 'Run VMG', values: ['', '', '', '', '', '', '']},
           ];
+        } else {
+          data = [
+            {
+              label: 'Wind Speed',
+              values: data.map(d => d.wind_speed.toString()),
+            },
+            {
+              label: 'Beat Angle',
+              values: data.map(d =>
+                d.beat_angle !== null ? d.beat_angle.toString() : '',
+              ),
+            },
+            {
+              label: 'Beat VMG',
+              values: data.map(d =>
+                d.beat_vmg !== null ? d.beat_vmg.toString() : '',
+              ),
+            },
+            {
+              label: '52',
+              values: data.map(d =>
+                d.twa_52 !== null ? d.twa_52.toString() : '',
+              ),
+            },
+            {
+              label: '60',
+              values: data.map(d =>
+                d.twa_60 !== null ? d.twa_60.toString() : '',
+              ),
+            },
+            {
+              label: '70',
+              values: data.map(d =>
+                d.twa_70 !== null ? d.twa_70.toString() : '',
+              ),
+            },
+            {
+              label: '75',
+              values: data.map(d =>
+                d.twa_75 !== null ? d.twa_75.toString() : '',
+              ),
+            },
+            {
+              label: '80',
+              values: data.map(d =>
+                d.twa_80 !== null ? d.twa_80.toString() : '',
+              ),
+            },
+            {
+              label: '90',
+              values: data.map(d =>
+                d.twa_90 !== null ? d.twa_90.toString() : '',
+              ),
+            },
+            {
+              label: '110',
+              values: data.map(d =>
+                d.twa_110 !== null ? d.twa_110.toString() : '',
+              ),
+            },
+            {
+              label: '120',
+              values: data.map(d =>
+                d.twa_120 !== null ? d.twa_120.toString() : '',
+              ),
+            },
+            {
+              label: '135',
+              values: data.map(d =>
+                d.twa_135 !== null ? d.twa_135.toString() : '',
+              ),
+            },
+            {
+              label: '150',
+              values: data.map(d =>
+                d.twa_150 !== null ? d.twa_150.toString() : '',
+              ),
+            },
+            {
+              label: '165',
+              values: data.map(d =>
+                d.twa_165 !== null ? d.twa_165.toString() : '',
+              ),
+            },
+            {
+              label: '180',
+              values: data.map(d =>
+                d.twa_180 !== null ? d.twa_180.toString() : '',
+              ),
+            },
+            {
+              label: 'Run Angle',
+              values: data.map(d =>
+                d.run_angle !== null ? d.run_angle.toString() : '',
+              ),
+            },
+            {
+              label: 'Run VMG',
+              values: data.map(d =>
+                d.run_vmg !== null ? d.run_vmg.toString() : '',
+              ),
+            },
+          ];
         }
+        // Ensure each row has exactly 7 values
+        data = data.map(row => ({
+          label: row.label,
+          values:
+            row.values.length === 7
+              ? row.values
+              : [...row.values, '', '', '', '', '', '', ''].slice(0, 7),
+        }));
         setPolars(data);
         setLoading(false);
       } catch (error) {
@@ -59,30 +173,26 @@ const BoatPolarsScreen = ({route, navigation}) => {
     fetchPolars();
 
     return () => {
-      Orientation.unlockAllOrientations(); // Unlock the orientation when the component unmounts
+      Orientation.unlockAllOrientations();
     };
-  }, [manufacturer, model, userId]); // Dependencies array
+  }, [manufacturer, model, userId]);
 
-  const handleChange = (rowIndex, colIndex, value) => {
-    const updatedPolars = [...polars];
-    updatedPolars[rowIndex].values[colIndex] = value;
-    setPolars(updatedPolars);
-  };
-
-  const handleUpdate = async () => {
+  const handleUpdate = async updatedPolars => {
     try {
-      const formattedPolars = polars.map(polar => ({
+      const formattedPolars = updatedPolars.map(polar => ({
         label: polar.label,
         manufacturer,
         model_name: model,
-        model_id: modelId,
+        model_id,
         user_id: userId,
         values: polar.values.map(value =>
           value === '' ? null : parseFloat(value),
-        ), // Convert empty strings to null and ensure numbers
+        ),
       }));
 
-      await updateUserBoatPolars(userId, formattedPolars);
+      console.log('Updating polars with:', {userId, model_id, formattedPolars});
+
+      await updateUserBoatPolars(userId, model_id, formattedPolars);
       Alert.alert('Success', 'Boat polars updated successfully');
     } catch (error) {
       console.error('Failed to update boat polars:', error);
@@ -105,30 +215,22 @@ const BoatPolarsScreen = ({route, navigation}) => {
         style={styles.background}
       />
       <Text style={styles.header}>Boat Polars</Text>
-      <View style={styles.table}>
-        {polars.map((polar, rowIndex) => (
-          <View key={rowIndex} style={styles.row}>
-            <Text style={styles.label}>{polar.label}</Text>
-            {polar.values.map((value, colIndex) => (
-              <TextInput
-                key={colIndex}
-                style={styles.input}
-                value={value === null ? '' : value.toString()}
-                onChangeText={text => handleChange(rowIndex, colIndex, text)}
-                keyboardType="numeric" // Ensure numeric keyboard
-              />
-            ))}
-          </View>
-        ))}
-      </View>
+      <BoatPolarsComponent polars={polars} onPolarsChange={setPolars} />
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleUpdate}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => handleUpdate(polars)}>
           <Text style={styles.buttonText}>Save Boat Polars</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
           onPress={() =>
-            navigation.navigate('RaceOverview', {userId, manufacturer, model})
+            navigation.navigate('RaceOverviewScreen', {
+              userId,
+              manufacturer,
+              model,
+              model_id,
+            })
           }>
           <Text style={styles.buttonText}>Proceed to Race Overview</Text>
         </TouchableOpacity>
@@ -161,33 +263,6 @@ const styles = StyleSheet.create({
     color: '#9af4fd',
     textAlign: 'center',
     marginBottom: 20,
-  },
-  table: {
-    flexDirection: 'column',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    backgroundColor: '#FFF',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  label: {
-    flex: 1,
-    padding: 10,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    margin: 5,
-    borderRadius: 5,
-    backgroundColor: '#FFF',
   },
   buttonContainer: {
     marginTop: 20,

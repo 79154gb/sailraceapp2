@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {register} from './api'; // Import the register function
+import {register} from '../api/api'; // Import the register function
 
 const SignUpScreen = ({navigation}) => {
   const [username, setUsername] = useState('');

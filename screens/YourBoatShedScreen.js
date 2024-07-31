@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import {getUserBoats, deleteUserBoat} from './api'; // Import the API function to get user boats
+import {getUserBoats, deleteUserBoat} from '../api/api'; // Import the API function to get user boats
 
 const YourBoatShedScreen = ({route, navigation}) => {
   const {userId} = route.params; // Retrieve userId from navigation params
@@ -27,11 +27,12 @@ const YourBoatShedScreen = ({route, navigation}) => {
     fetchBoats();
   }, [userId]);
 
-  const handleSelectBoat = (manufacturer, model) => {
-    navigation.navigate('UserBoatDetails', {
+  const handleSelectBoat = (manufacturer, model, model_id) => {
+    navigation.navigate('UserBoatDetailsScreen', {
       userId,
       manufacturer,
       model,
+      model_id,
     });
   };
 
@@ -80,8 +81,13 @@ const YourBoatShedScreen = ({route, navigation}) => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.selectButton}
-              onPress={() =>
-                handleSelectBoat(boat.manufacturer, boat.model_name)
+              onPress={
+                () =>
+                  handleSelectBoat(
+                    boat.manufacturer,
+                    boat.model_name,
+                    boat.model_id,
+                  ) // Pass modelId
               }>
               <Text style={styles.buttonText}>Select</Text>
             </TouchableOpacity>

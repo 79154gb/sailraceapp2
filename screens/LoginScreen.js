@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {login} from './api'; // Ensure this path is correct
+import {login} from '../api/api'; // Ensure this path is correct
 
 const LoginScreen = ({navigation}) => {
   const [email, setEmail] = useState('');

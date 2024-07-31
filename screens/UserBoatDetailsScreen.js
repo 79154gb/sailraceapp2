@@ -9,34 +9,54 @@ import {
   Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {getUserBoatDetails, updateUserBoatDetails} from './api'; // Ensure the path is correct
+import {
+  getUserBoatDetails,
+  getDinghyDetails,
+  addUserBoatDetails,
+  updateUserBoatDetails,
+} from '../api/api'; // Ensure the path is correct
 
 const UserBoatDetailsScreen = ({route, navigation}) => {
-  const {userId, manufacturer, model, modelId} = route.params; // Retrieve userId, manufacturer, model, and modelId from navigation params
-  console.log('Received modelId in UserBoatDetailsScreen:', modelId); // Log received modelId
+  const {userId, manufacturer, model, model_id} = route.params; // Retrieve userId, manufacturer, model, and modelId from navigation params
   const [boatDetails, setBoatDetails] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBoatDetails = async () => {
       try {
-        const details = await getUserBoatDetails(userId, manufacturer, model);
-        console.log('Fetched boat details:', details); // Log fetched details
-
-        if (details) {
+        const userBoatDetails = await getUserBoatDetails(
+          userId,
+          manufacturer,
+          model,
+        );
+        if (userBoatDetails) {
           // Convert all values to strings
           const stringDetails = Object.fromEntries(
-            Object.entries(details).map(([key, value]) => [
+            Object.entries(userBoatDetails).map(([key, value]) => [
               key,
               value !== null && value !== undefined ? String(value) : '',
             ]),
           );
           setBoatDetails(stringDetails);
         } else {
-          // If the selected boat details are not found, show a default message or handle it as needed
-          setBoatDetails({});
-        }
+          const dinghyDetails = await getDinghyDetails(manufacturer, model);
+          if (dinghyDetails) {
+            // Convert all values to strings
+            const stringDetails = Object.fromEntries(
+              Object.entries(dinghyDetails).map(([key, value]) => [
+                key,
+                value !== null && value !== undefined ? String(value) : '',
+              ]),
+            );
+            setBoatDetails(stringDetails);
 
+            // Add the dinghy details to user boat details
+            await addUserBoatDetails(userId, stringDetails);
+          } else {
+            // If no details found, set an empty object
+            setBoatDetails({});
+          }
+        }
         setLoading(false);
       } catch (error) {
         console.log('Error fetching boat details:', error);
@@ -187,12 +207,11 @@ const UserBoatDetailsScreen = ({route, navigation}) => {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
-            console.log('Passing modelId to BoatPolarsScreen:', modelId); // Log passing modelId
-            navigation.navigate('BoatPolars', {
+            navigation.navigate('BoatPolarsScreen', {
               userId,
               manufacturer,
               model,
-              modelId,
+              model_id,
             });
           }}>
           <Text style={styles.buttonText}>Proceed to Boat Polars</Text>

@@ -11,7 +11,7 @@ const HomeScreen = ({navigation, route}) => {
   };
 
   const navigateToBoatShed = () => {
-    navigation.navigate('YourBoatShed', {userId}); // Updated to navigate to YourBoatShed screen
+    navigation.navigate('YourBoatShedScreen', {userId}); // Updated to navigate to YourBoatShed screen
   };
 
   return (

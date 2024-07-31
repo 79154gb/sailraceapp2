@@ -36,21 +36,24 @@ const App = () => {
           options={{title: 'Dinghy Models'}}
         />
         <Stack.Screen
-          name="BoatPolars"
+          name="BoatPolarsScreen"
           component={BoatPolarsScreen}
           options={{title: 'Boat Polars'}}
         />
         <Stack.Screen
-          name="UserBoatDetails"
+          name="UserBoatDetailsScreen"
           component={UserBoatDetailsScreen}
           options={{title: 'Boat Details'}}
         />
         <Stack.Screen
-          name="YourBoatShed"
+          name="YourBoatShedScreen"
           component={YourBoatShedScreen}
           options={{title: 'Your Boat Shed'}}
         />
-        <Stack.Screen name="RaceOverview" component={RaceOverviewScreen} />
+        <Stack.Screen
+          name="RaceOverviewScreen"
+          component={RaceOverviewScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

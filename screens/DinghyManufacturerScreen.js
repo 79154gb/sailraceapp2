@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {View, StyleSheet, ActivityIndicator, ScrollView} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {getManufacturers} from './api'; // Import the API function
+import {getManufacturers} from '../api/api'; // Import the API function
 
 const DinghyManufacturerScreen = ({navigation, route}) => {
   const {userId} = route.params; // Retrieve userId from navigation params
