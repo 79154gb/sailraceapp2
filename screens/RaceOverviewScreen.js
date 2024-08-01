@@ -1,149 +1,46 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  FlatList,
-  Alert,
-} from 'react-native';
+import {View, StyleSheet, TouchableOpacity, Text, Alert} from 'react-native';
 import MapView, {Marker, Polyline} from 'react-native-maps';
 import Icon from 'react-native-vector-icons/Entypo';
-import Icon1 from 'react-native-vector-icons/Feather';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Geolocation from '@react-native-community/geolocation';
-import mockWindData from './mockWindData.json'; // Import mock data
-
-const markerTypes = [
-  {label: 'Start Mark 1', value: 'start1', color: 'blue'},
-  {label: 'Start Mark 2', value: 'start2', color: 'cyan'},
-  {label: 'Windward Mark', value: 'windward', color: 'red'},
-  {label: 'Leeward Mark', value: 'leeward', color: 'green'},
-  {label: 'Reach Mark', value: 'reach', color: 'yellow'},
-];
-
-const samplePolars = [
-  {angle: 30, speed: 6},
-  {angle: 60, speed: 6},
-  {angle: 90, speed: 8},
-  {angle: 120, speed: 7},
-  {angle: 150, speed: 7},
-  {angle: 180, speed: 5},
-];
-
-const getSpeedFromPolars = angle => {
-  for (let i = 0; i < samplePolars.length - 1; i++) {
-    if (angle >= samplePolars[i].angle && angle <= samplePolars[i + 1].angle) {
-      return samplePolars[i].speed;
-    }
-  }
-  return 5; // Default speed for angles not covered in the sample polars
-};
-
-const CustomButton = ({title, onPress, style, textStyle}) => (
-  <TouchableOpacity style={[buttonStyles.button, style]} onPress={onPress}>
-    <Text style={[buttonStyles.buttonText, textStyle]}>{title}</Text>
-  </TouchableOpacity>
-);
-
-const buttonStyles = StyleSheet.create({
-  button: {
-    backgroundColor: '#007bff', // Default button color
-    padding: 5,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginVertical: 5,
-  },
-  buttonText: {
-    color: '#fff', // Default text color
-    fontSize: 11, // Default font size
-  },
-});
-
-const InfoRow = ({iconName, label, value, style}) => (
-  <View style={styles.infoItem}>
-    <Icon name={iconName} size={20} color="black" />
-    <Text style={[styles.infoText, style]}>{`${label}: ${value}`}</Text>
-  </View>
-);
-
-const MarkerPicker = ({
-  markerTypes,
-  selectedMarkerType,
-  setSelectedMarkerType,
-  placeMarkerAtCross,
-  setMarkers,
-}) => (
-  <View style={styles.markerPicker}>
-    <FlatList
-      horizontal
-      data={markerTypes}
-      renderItem={({item}) => (
-        <TouchableOpacity
-          style={styles.modalItem}
-          onPress={() => setSelectedMarkerType(item.value)}>
-          <Text>{item.label}</Text>
-        </TouchableOpacity>
-      )}
-      keyExtractor={item => item.value}
-    />
-    {selectedMarkerType && (
-      <CustomButton title="Place Marker Here" onPress={placeMarkerAtCross} />
-    )}
-    <CustomButton title="Clear Markers" onPress={() => setMarkers([])} />
-  </View>
-);
-
-const TimerControls = ({
-  timerMinutes,
-  setTimerMinutes,
-  timerRunning,
-  startTimer,
-  resetTimer,
-}) => (
-  <View style={styles.timerControls}>
-    <CustomButton
-      title="Set Timer"
-      onPress={() => setTimerMinutes(timerMinutes < 10 ? timerMinutes + 1 : 1)}
-    />
-    <CustomButton
-      title={timerRunning ? 'Stop Timer' : 'Start Timer'}
-      onPress={timerRunning ? resetTimer : startTimer}
-    />
-    <CustomButton title="Reset Timer" onPress={resetTimer} />
-  </View>
-);
+import MarkerPicker from '../components/MarkerPicker';
+import TimerControls from '../components/TimerControls';
+import InfoRow from '../components/InfoRow';
+import CustomButton from '../components/CustomButton';
+import markerTypes from '../utils/markerTypes';
+import mockWindData from '../utils/mockWindData.json';
+import boatPolars from '../utils/boatPolars'; // Import boat polars
 
 const RaceOverviewScreen = () => {
   const [markers, setMarkers] = useState([]);
   const [selectedMarkerType, setSelectedMarkerType] = useState(null);
-  const [windArrows, setWindArrows] = useState([]);
-  const [windInfo, setWindInfo] = useState({speed: null, direction: null});
-  const [tideInfo, setTideInfo] = useState({speed: null, direction: null});
   const [centerCoordinate, setCenterCoordinate] = useState({
     latitude: null,
     longitude: null,
   });
+  const [initialRegion, setInitialRegion] = useState(null);
+  const [timerMinutes, setTimerMinutes] = useState(1);
+  const [timer, setTimer] = useState(null);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [isInfoTableMinimized, setIsInfoTableMinimized] = useState(false);
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [visibleRegion, setVisibleRegion] = useState(null);
-  const [isInfoTableMinimized, setIsInfoTableMinimized] = useState(false);
-  const [timerMinutes, setTimerMinutes] = useState(1);
-  const [timer, setTimer] = useState(null);
-  const [timerRunning, setTimerRunning] = useState(false);
+  const [windInfo, setWindInfo] = useState({speed: null, direction: null});
+  const [tideInfo, setTideInfo] = useState({speed: null, direction: null});
+  const [windArrows, setWindArrows] = useState([]);
   const [startLine, setStartLine] = useState({marker1: null, marker2: null});
-  const [sequenceOfMarks, setSequenceOfMarks] = useState([]);
+  const [selectingStartLine, setSelectingStartLine] = useState(false);
   const [boatPosition, setBoatPosition] = useState(null);
   const [boatHeading, setBoatHeading] = useState(0);
   const [boatTrail, setBoatTrail] = useState([]);
-  const [boatSpeed, setBoatSpeed] = useState(5); // Assume constant speed for simplicity
   const [simulationRunning, setSimulationRunning] = useState(false);
-  const mapRef = useRef(null);
-  const [initialRegion, setInitialRegion] = useState(null);
-  const [selectingStartLine, setSelectingStartLine] = useState(false);
+  const [sequenceOfMarks, setSequenceOfMarks] = useState([]);
   const [selectingSequence, setSelectingSequence] = useState(false);
+  const mapRef = useRef(null);
+  const simulationIntervalRef = useRef(null);
 
   useEffect(() => {
     Geolocation.getCurrentPosition(
@@ -155,13 +52,7 @@ const RaceOverviewScreen = () => {
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         });
-        setVisibleRegion({
-          latitude,
-          longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        });
-        setBoatPosition({latitude, longitude}); // Initialize boat position
+        setCenterCoordinate({latitude, longitude});
       },
       error => {
         console.error('Error getting current location:', error);
@@ -171,16 +62,7 @@ const RaceOverviewScreen = () => {
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         });
-        setVisibleRegion({
-          latitude: 37.78825,
-          longitude: -122.4324,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        });
-        setBoatPosition({
-          latitude: 37.78825,
-          longitude: -122.4324,
-        }); // Fallback boat position
+        setCenterCoordinate({latitude: 37.78825, longitude: -122.4324});
       },
       {
         enableHighAccuracy: true,
@@ -190,131 +72,37 @@ const RaceOverviewScreen = () => {
     );
   }, []);
 
-  const fetchWindData = async () => {
-    if (!visibleRegion) {
-      return;
-    }
-
-    const data = mockWindData.days[0].hours;
-    const gridSize = 8; // Increased grid size for more arrows
-    const {latitude, longitude, latitudeDelta, longitudeDelta} = visibleRegion;
-
-    const latStep = latitudeDelta / gridSize;
-    const longStep = longitudeDelta / gridSize;
-    const gridPoints = [];
-    for (let i = 0; i <= gridSize; i++) {
-      for (let j = 0; j <= gridSize; j++) {
-        const lat = latitude - latitudeDelta / 2 + latStep * i;
-        const long = longitude - longitudeDelta / 2 + longStep * j;
-        gridPoints.push({latitude: lat, longitude: long});
-      }
-    }
-
-    const arrows = gridPoints.map(point => ({
-      latitude: point.latitude,
-      longitude: point.longitude,
-      windDirection: null,
-    }));
-
-    gridPoints.forEach((point, index) => {
-      const currentHour = new Date(time).getHours();
-      let currentHourData = data.find(
-        hour => new Date(hour.datetime).getHours() === currentHour,
-      );
-
-      if (!currentHourData) {
-        currentHourData = data.reduce((prev, curr) => {
-          return Math.abs(new Date(curr.datetime).getHours() - currentHour) <
-            Math.abs(new Date(prev.datetime).getHours() - currentHour)
-            ? curr
-            : prev;
-        }, data[0]);
-      }
-
-      if (currentHourData) {
-        arrows[index].windDirection = currentHourData.winddir;
-      }
-    });
-
-    setWindArrows(arrows);
-
-    const centerLatitude = latitude;
-    const centerLongitude = longitude;
-    let centerData = data.find(
-      hour => new Date(hour.datetime).getHours() === new Date(time).getHours(),
-    );
-
-    if (!centerData) {
-      centerData = data.reduce((prev, curr) => {
-        return Math.abs(
-          new Date(curr.datetime).getHours() - new Date(time).getHours(),
-        ) <
-          Math.abs(
-            new Date(prev.datetime).getHours() - new Date(time).getHours(),
-          )
-          ? curr
-          : prev;
-      }, data[0]);
-    }
-
-    if (centerData) {
-      setWindInfo({
-        speed: centerData.windspeed,
-        direction: centerData.winddir,
-      });
-      setTideInfo({
-        speed: centerData.tideSpeed,
-        direction: centerData.tideDir,
-      });
-    }
-    setCenterCoordinate({latitude: centerLatitude, longitude: centerLongitude});
-  };
-
-  useEffect(() => {
-    const debounceFetchWindData = setTimeout(fetchWindData, 500);
-    return () => clearTimeout(debounceFetchWindData);
-  }, [visibleRegion, date, time]);
-
-  const formatDate = formattedDate => {
-    const year = formattedDate.getFullYear();
-    const month = (formattedDate.getMonth() + 1).toString().padStart(2, '0');
-    const day = formattedDate.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const handleMapPress = event => {
-    if (selectedMarkerType) {
+    if (selectingStartLine) {
+      if (!startLine.marker1) {
+        setStartLine({marker1: event.nativeEvent.coordinate, marker2: null});
+        console.log('Start Line Marker 1 set:', event.nativeEvent.coordinate);
+      } else if (!startLine.marker2) {
+        setStartLine(prev => ({
+          ...prev,
+          marker2: event.nativeEvent.coordinate,
+        }));
+        console.log('Start Line Marker 2 set:', event.nativeEvent.coordinate);
+        setSelectingStartLine(false);
+      }
+    } else if (selectingSequence) {
+      const newMark = event.nativeEvent.coordinate;
+      setSequenceOfMarks(prevMarks => [...prevMarks, newMark]);
+      console.log('Sequence Marker set:', newMark);
+    } else if (selectedMarkerType) {
       const newMarker = {
         coordinate: event.nativeEvent.coordinate,
-        key: `${markers.length}`,
+        key: `${markers.length}_${Date.now()}`, // Ensure unique key by combining length and timestamp
         type: selectedMarkerType,
         color: markerTypes.find(type => type.value === selectedMarkerType)
           ?.color,
       };
-      setMarkers([...markers, newMarker]);
-      console.log(
-        `Marker set: ${selectedMarkerType}, Latitude: ${newMarker.coordinate.latitude}, Longitude: ${newMarker.coordinate.longitude}`,
-      );
+      setMarkers(prevMarkers => {
+        const updatedMarkers = [...prevMarkers, newMarker];
+        console.log('Updated Markers:', updatedMarkers);
+        return updatedMarkers;
+      });
       setSelectedMarkerType(null);
-    } else if (selectingStartLine) {
-      if (!startLine.marker1) {
-        setStartLine({...startLine, marker1: event.nativeEvent.coordinate});
-        console.log(
-          `Start line marker 1 set: Latitude: ${event.nativeEvent.coordinate.latitude}, Longitude: ${event.nativeEvent.coordinate.longitude}`,
-        );
-      } else {
-        setStartLine({...startLine, marker2: event.nativeEvent.coordinate});
-        setSelectingStartLine(false);
-        console.log(
-          `Start line marker 2 set: Latitude: ${event.nativeEvent.coordinate.latitude}, Longitude: ${event.nativeEvent.coordinate.longitude}`,
-        );
-      }
-    } else if (selectingSequence) {
-      const newSequenceMark = event.nativeEvent.coordinate;
-      setSequenceOfMarks([...sequenceOfMarks, newSequenceMark]);
-      console.log(
-        `Sequence marker set: Latitude: ${newSequenceMark.latitude}, Longitude: ${newSequenceMark.longitude}`,
-      );
     }
   };
 
@@ -322,32 +110,6 @@ const RaceOverviewScreen = () => {
     const updatedMarkers = [...markers];
     updatedMarkers[index].coordinate = event.nativeEvent.coordinate;
     setMarkers(updatedMarkers);
-  };
-
-  const zoomIn = () => {
-    mapRef.current.animateToRegion(
-      {
-        ...visibleRegion,
-        latitudeDelta: visibleRegion.latitudeDelta / 2,
-        longitudeDelta: visibleRegion.longitudeDelta / 2,
-      },
-      1000,
-    );
-  };
-
-  const zoomOut = () => {
-    mapRef.current.animateToRegion(
-      {
-        ...visibleRegion,
-        latitudeDelta: visibleRegion.latitudeDelta * 2,
-        longitudeDelta: visibleRegion.longitudeDelta * 2,
-      },
-      1000,
-    );
-  };
-
-  const onRegionChangeComplete = region => {
-    setVisibleRegion(region);
   };
 
   const placeMarkerAtCross = () => {
@@ -361,17 +123,25 @@ const RaceOverviewScreen = () => {
           latitude: centerCoordinate.latitude,
           longitude: centerCoordinate.longitude,
         },
-        key: `${markers.length}`,
+        key: `${markers.length}_${Date.now()}`, // Ensure unique key by combining length and timestamp
         type: selectedMarkerType,
         color: markerTypes.find(type => type.value === selectedMarkerType)
           ?.color,
       };
-      setMarkers([...markers, newMarker]);
-      console.log(
-        `Marker set at cross: ${selectedMarkerType}, Latitude: ${newMarker.coordinate.latitude}, Longitude: ${newMarker.coordinate.longitude}`,
-      );
+      setMarkers(prevMarkers => {
+        const updatedMarkers = [...prevMarkers, newMarker];
+        console.log('Marker placed at cross:', newMarker);
+        return updatedMarkers;
+      });
       setSelectedMarkerType(null);
     }
+  };
+
+  const onRegionChangeComplete = region => {
+    setCenterCoordinate({
+      latitude: region.latitude,
+      longitude: region.longitude,
+    });
   };
 
   const startTimer = () => {
@@ -394,79 +164,305 @@ const RaceOverviewScreen = () => {
     setTimerRunning(false);
   };
 
-  const calculateRoute = () => {
-    if (sequenceOfMarks.length < 2) {
-      Alert.alert(
-        'Error',
-        'At least two marks are needed to calculate the route',
+  const fetchWindAndTideData = () => {
+    const selectedDate = formatDate(date);
+    const currentHour = time.getHours();
+    console.log(
+      `Fetching data for date: ${selectedDate}, hour: ${currentHour}`,
+    );
+
+    const dayData = mockWindData.days.find(day => day.date === selectedDate);
+
+    if (dayData) {
+      console.log('Day data found:', dayData);
+      const hourData = dayData.hours.find(
+        hour => new Date(hour.datetime).getHours() === currentHour,
       );
-      return;
+
+      if (hourData) {
+        console.log('Hour data found:', hourData);
+        setWindInfo({
+          speed: hourData.windspeed,
+          direction: hourData.winddir,
+        });
+        setTideInfo({
+          speed: hourData.tideSpeed,
+          direction: hourData.tideDir,
+        });
+
+        // Set wind arrows
+        const gridSize = 8; // Define the grid size for wind arrows
+        const latStep = (initialRegion.latitudeDelta * 2) / gridSize;
+        const lonStep = (initialRegion.longitudeDelta * 2) / gridSize;
+        const arrows = [];
+
+        for (let i = 0; i <= gridSize; i++) {
+          for (let j = 0; j <= gridSize; j++) {
+            const arrowLat =
+              initialRegion.latitude -
+              initialRegion.latitudeDelta +
+              latStep * i;
+            const arrowLon =
+              initialRegion.longitude -
+              initialRegion.longitudeDelta +
+              lonStep * j;
+            arrows.push({
+              latitude: arrowLat,
+              longitude: arrowLon,
+              windDirection: hourData.winddir,
+            });
+          }
+        }
+        setWindArrows(arrows);
+      } else {
+        console.log('No hour data found for the current hour.');
+        setWindInfo({speed: 'N/A', direction: 'N/A'});
+        setTideInfo({speed: 'N/A', direction: 'N/A'});
+      }
+    } else {
+      console.log('No day data found for the selected date.');
+      setWindInfo({speed: 'N/A', direction: 'N/A'});
+      setTideInfo({speed: 'N/A', direction: 'N/A'});
+    }
+  };
+
+  useEffect(() => {
+    fetchWindAndTideData();
+  }, [date, time]);
+
+  const formatDate = date => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getSpeedFromPolars = angle => {
+    for (let i = 0; i < boatPolars.length - 1; i++) {
+      if (angle >= boatPolars[i].angle && angle <= boatPolars[i + 1].angle) {
+        return boatPolars[i].speed;
+      }
+    }
+    return 5; // Default speed for angles not covered in the polars
+  };
+
+  const calculateSailingPoint = angle => {
+    if (angle > 345 || angle <= 15) return 'Running';
+    if (angle > 15 && angle <= 75) return 'Broad Reach';
+    if (angle > 75 && angle <= 105) return 'Beam Reach';
+    if (angle > 105 && angle <= 165) return 'Close Reach';
+    return 'Beating'; // Default to Beating if none of the above
+  };
+
+  const calculateTack = angle => {
+    return angle > 180 ? 'Port' : 'Starboard';
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+  };
+
+  const calculateIntermediateWaypoint = (position, heading, distance) => {
+    const R = 6371; // Radius of the Earth in km
+    const d = distance / R; // Angular distance in radians
+    const bearing = (heading * Math.PI) / 180; // Convert bearing to radians
+
+    const lat1 = (position.latitude * Math.PI) / 180; // Current latitude in radians
+    const lon1 = (position.longitude * Math.PI) / 180; // Current longitude in radians
+
+    const lat2 = Math.asin(
+      Math.sin(lat1) * Math.cos(d) +
+        Math.cos(lat1) * Math.sin(d) * Math.cos(bearing),
+    );
+    const lon2 =
+      lon1 +
+      Math.atan2(
+        Math.sin(bearing) * Math.sin(d) * Math.cos(lat1),
+        Math.cos(d) - Math.sin(lat1) * Math.sin(lat2),
+      );
+
+    return {
+      latitude: (lat2 * 180) / Math.PI, // Convert back to degrees
+      longitude: (lon2 * 180) / Math.PI, // Convert back to degrees
+    };
+  };
+
+  const preCalculateRacePlan = () => {
+    const plan = [];
+    let currentPosition = boatPosition;
+    let remainingMarks = [startLine.marker2, ...sequenceOfMarks];
+    let maxIterations = 1000; // to prevent infinite loops
+
+    while (remainingMarks.length > 0 && maxIterations > 0) {
+      const nextMark = remainingMarks[0];
+      const distanceToNextMark = calculateDistance(
+        currentPosition.latitude,
+        currentPosition.longitude,
+        nextMark.latitude,
+        nextMark.longitude,
+      );
+      const headingToNextMark = Math.atan2(
+        nextMark.latitude - currentPosition.latitude,
+        nextMark.longitude - currentPosition.longitude,
+      );
+      const angleToNextMark = (headingToNextMark * 180) / Math.PI;
+      const relativeWindAngle = Math.abs(angleToNextMark - windInfo.direction);
+      const speed = getSpeedFromPolars(relativeWindAngle);
+      const tack = calculateTack(angleToNextMark);
+      const pointOfSail = calculateSailingPoint(relativeWindAngle);
+
+      console.log(
+        `Plan Step: Heading ${angleToNextMark.toFixed(
+          2,
+        )} degrees, Speed ${speed.toFixed(
+          2,
+        )} knots, from (${currentPosition.latitude.toFixed(
+          4,
+        )}, ${currentPosition.longitude.toFixed(
+          4,
+        )}) to (${nextMark.latitude.toFixed(4)}, ${nextMark.longitude.toFixed(
+          4,
+        )}), Tack: ${tack}, Point of Sail: ${pointOfSail}`,
+      );
+
+      // Check if tacking is required
+      if (relativeWindAngle < 30 || relativeWindAngle > 150) {
+        // Add intermediate waypoint to simulate tacking
+        const tackAngle =
+          tack === 'Starboard' ? angleToNextMark + 60 : angleToNextMark - 60;
+        const intermediateWaypoint = calculateIntermediateWaypoint(
+          currentPosition,
+          tackAngle,
+          distanceToNextMark / 2,
+        );
+        const distanceToIntermediateWaypoint = calculateDistance(
+          currentPosition.latitude,
+          currentPosition.longitude,
+          intermediateWaypoint.latitude,
+          intermediateWaypoint.longitude,
+        );
+
+        // Check if intermediate waypoint makes sense (is closer to the next mark)
+        if (distanceToIntermediateWaypoint < distanceToNextMark) {
+          plan.push({
+            from: {...currentPosition},
+            to: {...intermediateWaypoint},
+            heading: tackAngle,
+            speed: getSpeedFromPolars(Math.abs(tackAngle - windInfo.direction)),
+            tack,
+            pointOfSail: 'Tacking',
+            distance: distanceToIntermediateWaypoint,
+          });
+          currentPosition = intermediateWaypoint;
+        } else {
+          // If not making progress, proceed to the next mark directly
+          plan.push({
+            from: {...currentPosition},
+            to: {...nextMark},
+            heading: angleToNextMark,
+            speed,
+            tack,
+            pointOfSail,
+            distance: distanceToNextMark,
+          });
+          currentPosition = nextMark;
+          remainingMarks.shift();
+        }
+      } else {
+        plan.push({
+          from: {...currentPosition},
+          to: {...nextMark},
+          heading: angleToNextMark,
+          speed,
+          tack,
+          pointOfSail,
+          distance: distanceToNextMark,
+        });
+        currentPosition = nextMark;
+        remainingMarks.shift();
+      }
+
+      maxIterations--;
     }
 
-    let route = [];
-    for (let i = 0; i < sequenceOfMarks.length - 1; i++) {
-      const start = sequenceOfMarks[i];
-      const end = sequenceOfMarks[i + 1];
-      route.push(start, end);
+    if (maxIterations <= 0) {
+      console.error('Infinite loop detected in preCalculateRacePlan');
     }
-    return route;
+
+    return plan;
   };
 
   const startSimulation = () => {
-    const route = calculateRoute();
-    if (!route) {
+    if (!boatPosition) {
+      Alert.alert('Error', 'Please set the starting position of the boat.');
+      return;
+    }
+    if (!startLine.marker1 || !startLine.marker2) {
+      Alert.alert('Error', 'Please define the start line.');
       return;
     }
 
-    setSimulationRunning(true);
-    let currentStep = 0;
+    const racePlan = preCalculateRacePlan();
 
-    const interval = setInterval(() => {
-      if (currentStep >= route.length - 1) {
-        clearInterval(interval);
-        setSimulationRunning(false);
+    setSimulationRunning(true);
+    setBoatTrail([boatPosition]);
+
+    let currentStepIndex = 0;
+
+    simulationIntervalRef.current = setInterval(() => {
+      if (currentStepIndex >= racePlan.length) {
+        stopSimulation();
         return;
       }
 
-      const start = route[currentStep];
-      const end = route[currentStep + 1];
+      const currentStep = racePlan[currentStepIndex];
+      setBoatPosition(currentStep.to);
+      setBoatHeading(currentStep.heading);
+      setBoatTrail(prevTrail => [...prevTrail, currentStep.to]);
 
-      const deltaX = (end.latitude - start.latitude) / 10;
-      const deltaY = (end.longitude - start.longitude) / 10;
+      console.log(
+        `Boat Position: ${currentStep.to.latitude.toFixed(
+          4,
+        )}, ${currentStep.to.longitude.toFixed(4)}`,
+      );
+      console.log(`Boat Heading: ${currentStep.heading.toFixed(2)} degrees`);
+      console.log(`Boat Speed: ${currentStep.speed.toFixed(2)} knots`);
+      console.log(`Tack: ${currentStep.tack}`);
+      console.log(`Point of Sail: ${currentStep.pointOfSail}`);
 
-      const newLatitude = boatPosition.latitude + deltaX;
-      const newLongitude = boatPosition.longitude + deltaY;
-
-      const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-      const speed = getSpeedFromPolars(Math.abs(angle - windInfo.direction));
-
-      setBoatSpeed(speed);
-      setBoatPosition({
-        latitude: newLatitude,
-        longitude: newLongitude,
-      });
-
-      setBoatHeading(angle);
-
-      setBoatTrail([
-        ...boatTrail,
-        {latitude: newLatitude, longitude: newLongitude},
-      ]);
-
-      if (
-        Math.abs(newLatitude - end.latitude) < Math.abs(deltaX) &&
-        Math.abs(newLongitude - end.longitude) < Math.abs(deltaY)
-      ) {
-        currentStep += 1;
-      }
+      currentStepIndex += 1;
     }, 1000);
   };
 
-  const resetSimulation = () => {
+  const stopSimulation = () => {
+    setSimulationRunning(false);
+    clearInterval(simulationIntervalRef.current);
+  };
+
+  const resetRace = () => {
+    stopSimulation();
     setBoatPosition(null);
     setBoatHeading(0);
     setBoatTrail([]);
-    setSimulationRunning(false);
+    setStartLine({marker1: null, marker2: null});
+    setSequenceOfMarks([]);
+    console.log('Race reset.');
+  };
+
+  const selectBoatStartPosition = event => {
+    setBoatPosition(event.nativeEvent.coordinate);
+    setBoatHeading(0); // Reset heading
+    console.log('Boat starting position set:', event.nativeEvent.coordinate);
   };
 
   return (
@@ -475,7 +471,9 @@ const RaceOverviewScreen = () => {
         <MapView
           ref={mapRef}
           style={styles.map}
+          key={JSON.stringify(initialRegion)} // Force re-render of MapView when region changes
           onPress={handleMapPress}
+          onLongPress={selectBoatStartPosition}
           onRegionChangeComplete={onRegionChangeComplete}
           initialRegion={initialRegion}
           showsUserLocation={true}
@@ -493,7 +491,37 @@ const RaceOverviewScreen = () => {
               }
             />
           ))}
-
+          {startLine.marker1 && startLine.marker2 && (
+            <Polyline
+              coordinates={[startLine.marker1, startLine.marker2]}
+              strokeColor="red"
+              strokeWidth={2}
+            />
+          )}
+          {sequenceOfMarks.length > 0 && (
+            <Polyline
+              coordinates={sequenceOfMarks}
+              strokeColor="blue"
+              strokeWidth={2}
+            />
+          )}
+          {boatPosition && (
+            <>
+              <Marker
+                coordinate={boatPosition}
+                title="Boat"
+                description="Starting Position">
+                <View style={{transform: [{rotate: `${boatHeading}deg`}]}}>
+                  <Icon name="triangle-up" size={24} color="blue" />
+                </View>
+              </Marker>
+              <Polyline
+                coordinates={boatTrail}
+                strokeColor="blue"
+                strokeWidth={3}
+              />
+            </>
+          )}
           {windArrows.map((arrow, index) => (
             <Marker
               key={index}
@@ -518,43 +546,6 @@ const RaceOverviewScreen = () => {
               </View>
             </Marker>
           ))}
-
-          {boatPosition && (
-            <Marker
-              coordinate={boatPosition}
-              title="Boat"
-              description="Simulated Boat">
-              <View
-                style={{
-                  alignItems: 'center',
-                  transform: [{rotate: `${boatHeading}deg`}],
-                }}>
-                <Icon name="triangle-up" size={20} color="green" />
-              </View>
-            </Marker>
-          )}
-
-          <Polyline
-            coordinates={boatTrail}
-            strokeColor="green"
-            strokeWidth={3}
-          />
-
-          {startLine.marker1 && startLine.marker2 && (
-            <Polyline
-              coordinates={[startLine.marker1, startLine.marker2]}
-              strokeColor="red"
-              strokeWidth={2}
-            />
-          )}
-
-          {sequenceOfMarks.length > 1 && (
-            <Polyline
-              coordinates={sequenceOfMarks}
-              strokeColor="blue"
-              strokeWidth={2}
-            />
-          )}
         </MapView>
       )}
 
@@ -590,7 +581,7 @@ const RaceOverviewScreen = () => {
 
           <View style={styles.row}>
             <InfoRow
-              iconName="wind"
+              iconName="direction"
               label="Wind"
               value={
                 windInfo.speed !== null
@@ -599,7 +590,6 @@ const RaceOverviewScreen = () => {
               }
               style={styles.infoTextLarge}
             />
-
             <InfoRow
               iconName="water"
               label="Tide"
@@ -637,7 +627,7 @@ const RaceOverviewScreen = () => {
 
           <View style={styles.row}>
             <InfoRow
-              iconName="timer"
+              iconName="back-in-time"
               label="Timer"
               value={
                 timer !== null
@@ -656,7 +646,6 @@ const RaceOverviewScreen = () => {
           </View>
 
           <MarkerPicker
-            markerTypes={markerTypes}
             selectedMarkerType={selectedMarkerType}
             setSelectedMarkerType={setSelectedMarkerType}
             placeMarkerAtCross={placeMarkerAtCross}
@@ -668,6 +657,9 @@ const RaceOverviewScreen = () => {
               title="Define Start Line"
               onPress={() => setSelectingStartLine(true)}
             />
+          </View>
+
+          <View style={styles.row}>
             <CustomButton
               title="Set Sequence of Marks"
               onPress={() => setSelectingSequence(true)}
@@ -683,7 +675,12 @@ const RaceOverviewScreen = () => {
           <View style={styles.row}>
             <CustomButton
               title={simulationRunning ? 'Stop Simulation' : 'Start Simulation'}
-              onPress={simulationRunning ? resetSimulation : startSimulation}
+              onPress={simulationRunning ? stopSimulation : startSimulation}
+            />
+            <CustomButton
+              title="Restart Race"
+              onPress={resetRace}
+              style={{backgroundColor: 'orange'}}
             />
           </View>
         </View>
@@ -764,53 +761,6 @@ const styles = StyleSheet.create({
   infoTextLarge: {
     fontSize: 11,
   },
-  clearButtonContainer: {
-    position: 'absolute',
-    bottom: 80,
-    right: 20,
-  },
-  zoomButtons: {
-    position: 'absolute',
-    bottom: 140,
-    right: 20,
-    flexDirection: 'column',
-  },
-  zoomButton: {
-    width: 40,
-    height: 40,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    borderRadius: 5,
-    elevation: 2,
-  },
-  zoomText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  picker: {
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'gray',
-    backgroundColor: 'white',
-    borderRadius: 5,
-    marginVertical: 5,
-  },
   minimizeButton: {
     alignSelf: 'flex-end',
     padding: 5,
@@ -833,24 +783,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  buttonContainer: {
-    marginTop: 10,
-  },
-  timerControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginLeft: 10,
-  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 5,
-  },
-  markerPicker: {
-    marginTop: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
 });
 

@@ -1,0 +1,44 @@
+{
+    "days": [
+      {
+        "date": "2024-07-31",
+        "hours": [
+          {
+            "datetime": "2024-07-31T00:00:00",
+            "windspeed": 10,
+            "winddir": 180,
+            "tideSpeed": 2,
+            "tideDir": 90
+          },
+          {
+            "datetime": "2024-07-31T01:00:00",
+            "windspeed": 12,
+            "winddir": 190,
+            "tideSpeed": 2.5,
+            "tideDir": 95
+          }
+        ]
+      },
+      {
+        "date": "2024-08-01",
+        "hours": [
+          {
+            "datetime": "2024-08-01T00:00:00",
+            "windspeed": 15,
+            "winddir": 200,
+            "tideSpeed": 3,
+            "tideDir": 100
+          },
+          {
+            "datetime": "2024-08-01T01:00:00",
+            "windspeed": 14,
+            "winddir": 210,
+            "tideSpeed": 2.8,
+            "tideDir": 110
+          }
+        ]
+      }
+    ]
+  }
+  
+  

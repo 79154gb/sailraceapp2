@@ -1,36 +1,53 @@
 {
-    "days": [
-      {
-        "hours": [
-          {
-            "datetime": "2024-06-14T00:00:00",
-            "windspeed": 6,
-            "windgust": 10,
-            "winddir": 160,
-            "tideSpeed": 3,
-            "tideDir": 90
-          },
-          {
-            "datetime": "2024-06-14T01:00:00",
-            "windspeed": 8,
-            "windgust": 12,
-            "winddir": 180,
-            "tideSpeed": 2,
-            "tideDir": 70
-          },
-          {
-            "datetime": "2024-06-14T02:00:00",
-            "windspeed": 10,
-            "windgust": 14,
-            "winddir": 140,
-            "tideSpeed": 4,
-            "tideDir": 110
-          }
-          // Add more hourly data with variations
-        ]
-      }
-    ]
-  }
+  "days": [
+    {
+      "date": "2024-07-01",
+      "hours": [
+        {
+          "datetime": "2024-07-01T00:00:00",
+          "windspeed": 10,
+          "winddir": 180,
+          "tideSpeed": 2,
+          "tideDir": 90
+        },
+        {
+          "datetime": "2024-07-01T01:00:00",
+          "windspeed": 12,
+          "winddir": 190,
+          "tideSpeed": 2.5,
+          "tideDir": 95
+        },
+        {
+          "datetime": "2024-07-01T20:00:00",
+          "windspeed": 15,
+          "winddir": 210,
+          "tideSpeed": 3,
+          "tideDir": 100
+        }
+      ]
+    },
+    {
+      "date": "2024-07-31",
+      "hours": [
+        {
+          "datetime": "2024-07-31T00:00:00",
+          "windspeed": 10,
+          "winddir": 180,
+          "tideSpeed": 2,
+          "tideDir": 90
+        },
+        {
+          "datetime": "2024-07-31T01:00:00",
+          "windspeed": 12,
+          "winddir": 190,
+          "tideSpeed": 2.5,
+          "tideDir": 95
+        }
+      ]
+    }
+  ]
+}
+
   
   
   
