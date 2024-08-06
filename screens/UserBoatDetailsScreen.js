@@ -14,12 +14,28 @@ import {
   getDinghyDetails,
   addUserBoatDetails,
   updateUserBoatDetails,
-} from '../api/api'; // Ensure the path is correct
+} from '../api/api';
 
 const UserBoatDetailsScreen = ({route, navigation}) => {
-  const {userId, manufacturer, model, model_id} = route.params; // Retrieve userId, manufacturer, model, and modelId from navigation params
-  const [boatDetails, setBoatDetails] = useState({});
-  const [loading, setLoading] = useState(true);
+  const {userId, manufacturer, model, model_id} = route.params;
+  const [boatDetails, setBoatDetails] = useState({
+    manufacturer: '',
+    model_name: '',
+    boat_name: '',
+    sail_number: '',
+    type: '',
+    length: '',
+    beam: '',
+    sail_area_upwind: '',
+    gennaker_sail_area: '',
+    spinnaker_sail_area: '',
+    weight: '',
+    type_crew: '',
+    crew_weight: '',
+    type_purpose: '',
+    design_by: '',
+    design_year: '',
+  });
 
   useEffect(() => {
     const fetchBoatDetails = async () => {
@@ -29,38 +45,59 @@ const UserBoatDetailsScreen = ({route, navigation}) => {
           manufacturer,
           model,
         );
+        console.log('Fetched userBoatDetails:', userBoatDetails);
         if (userBoatDetails) {
-          // Convert all values to strings
           const stringDetails = Object.fromEntries(
             Object.entries(userBoatDetails).map(([key, value]) => [
               key,
               value !== null && value !== undefined ? String(value) : '',
             ]),
           );
-          setBoatDetails(stringDetails);
+          console.log('Converted stringDetails:', stringDetails);
+          setBoatDetails({
+            ...stringDetails,
+            boat_name: stringDetails.boat_name || '',
+            sail_number: stringDetails.sail_number || '',
+          });
         } else {
           const dinghyDetails = await getDinghyDetails(manufacturer, model);
+          console.log('Fetched dinghyDetails:', dinghyDetails);
           if (dinghyDetails) {
-            // Convert all values to strings
             const stringDetails = Object.fromEntries(
               Object.entries(dinghyDetails).map(([key, value]) => [
                 key,
                 value !== null && value !== undefined ? String(value) : '',
               ]),
             );
-            setBoatDetails(stringDetails);
-
-            // Add the dinghy details to user boat details
-            await addUserBoatDetails(userId, stringDetails);
+            console.log('Converted stringDetails:', stringDetails);
+            setBoatDetails({
+              ...stringDetails,
+              boat_name: '',
+              sail_number: '',
+            });
           } else {
-            // If no details found, set an empty object
-            setBoatDetails({});
+            setBoatDetails({
+              manufacturer: '',
+              model_name: '',
+              boat_name: '',
+              sail_number: '',
+              type: '',
+              length: '',
+              beam: '',
+              sail_area_upwind: '',
+              gennaker_sail_area: '',
+              spinnaker_sail_area: '',
+              weight: '',
+              type_crew: '',
+              crew_weight: '',
+              type_purpose: '',
+              design_by: '',
+              design_year: '',
+            });
           }
         }
-        setLoading(false);
       } catch (error) {
         console.log('Error fetching boat details:', error);
-        setLoading(false);
       }
     };
 
@@ -68,12 +105,25 @@ const UserBoatDetailsScreen = ({route, navigation}) => {
   }, [userId, manufacturer, model]);
 
   const handleChange = (key, value) => {
+    console.log(`Changing ${key} to ${value}`);
     setBoatDetails({...boatDetails, [key]: value});
   };
 
   const handleUpdate = async () => {
     try {
-      await updateUserBoatDetails(userId, boatDetails);
+      const userBoatDetails = await getUserBoatDetails(
+        userId,
+        boatDetails.manufacturer,
+        boatDetails.model_name,
+      );
+      console.log('Fetched userBoatDetails for update:', userBoatDetails);
+
+      if (userBoatDetails) {
+        await updateUserBoatDetails(userId, boatDetails);
+      } else {
+        await addUserBoatDetails(userId, boatDetails);
+      }
+
       Alert.alert('Success', 'Boat details updated successfully');
     } catch (error) {
       console.error('Failed to update boat details:', error);
@@ -81,13 +131,7 @@ const UserBoatDetailsScreen = ({route, navigation}) => {
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
+  console.log('Rendering UserBoatDetailsScreen');
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -103,6 +147,22 @@ const UserBoatDetailsScreen = ({route, navigation}) => {
       <View style={styles.fieldContainer}>
         <Text style={styles.label}>Model:</Text>
         <Text style={styles.value}>{boatDetails.model_name}</Text>
+      </View>
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Your Boat Name:</Text>
+        <TextInput
+          style={styles.input}
+          value={boatDetails.boat_name}
+          onChangeText={text => handleChange('boat_name', text)}
+        />
+      </View>
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Sail Number:</Text>
+        <TextInput
+          style={styles.input}
+          value={boatDetails.sail_number}
+          onChangeText={text => handleChange('sail_number', text)}
+        />
       </View>
       <View style={styles.fieldContainer}>
         <Text style={styles.label}>Type:</Text>
@@ -207,6 +267,7 @@ const UserBoatDetailsScreen = ({route, navigation}) => {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
+            handleUpdate();
             navigation.navigate('BoatPolarsScreen', {
               userId,
               manufacturer,
@@ -233,11 +294,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     fontSize: 24,

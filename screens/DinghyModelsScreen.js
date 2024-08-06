@@ -1,13 +1,7 @@
 import React, {useState, useEffect} from 'react';
-import {
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import {View, StyleSheet, ActivityIndicator, ScrollView} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {getModelsByManufacturer, addBoatToUserAccount} from '../api/api'; // Import the API functions
+import {getModelsByManufacturer} from '../api/api'; // Import the API function
 
 const DinghyModelsScreen = ({route, navigation}) => {
   const {selectedManufacturer, userId} = route.params; // Retrieve the selected manufacturer and userId from navigation params
@@ -32,39 +26,20 @@ const DinghyModelsScreen = ({route, navigation}) => {
     fetchModels();
   }, [selectedManufacturer]);
 
-  const handleModelSelect = async itemValue => {
+  const handleModelSelect = itemValue => {
     console.log('Selected model:', itemValue);
     setModel(itemValue);
 
-    try {
-      const response = await addBoatToUserAccount(
-        userId,
-        selectedManufacturer,
-        itemValue,
-      );
-      console.log('Response from addBoatToUserAccount:', response);
+    const selectedModel = items.find(item => item.value === itemValue);
+    const model_id = selectedModel ? selectedModel.id : null; // Ensure you have the modelId
+    console.log('Retrieved modelId:', model_id);
 
-      if (
-        response.message === 'Boat already exists in user account' ||
-        response.message === 'Boat added to user account successfully'
-      ) {
-        const selectedModel = items.find(item => item.value === itemValue);
-        const model_id = selectedModel ? selectedModel.id : null; // Ensure you have the modelId
-        console.log('Retrieved modelId:', model_id);
-
-        navigation.navigate('UserBoatDetailsScreen', {
-          userId,
-          manufacturer: selectedManufacturer,
-          model: itemValue,
-          model_id, // Pass the modelId to the next screen
-        });
-      } else {
-        throw new Error('Unexpected response');
-      }
-    } catch (error) {
-      console.log('Error adding boat to user account:', error);
-      Alert.alert('Error', 'Failed to add boat to user account');
-    }
+    navigation.navigate('UserBoatDetailsScreen', {
+      userId,
+      manufacturer: selectedManufacturer,
+      model: itemValue,
+      model_id, // Pass the modelId to the next screen
+    });
   };
 
   if (loading) {

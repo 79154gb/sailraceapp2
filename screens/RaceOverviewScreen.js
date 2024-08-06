@@ -1,5 +1,13 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {View, StyleSheet, TouchableOpacity, Text, Alert} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Alert,
+  Platform,
+  PermissionsAndroid,
+} from 'react-native';
 import MapView, {Marker, Polyline} from 'react-native-maps';
 import Icon from 'react-native-vector-icons/Entypo';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -35,41 +43,70 @@ const RaceOverviewScreen = () => {
   const [selectingStartLine, setSelectingStartLine] = useState(false);
   const [boatPosition, setBoatPosition] = useState(null);
   const [boatHeading, setBoatHeading] = useState(0);
+  const [boatSpeed, setBoatSpeed] = useState(0);
   const [boatTrail, setBoatTrail] = useState([]);
   const [simulationRunning, setSimulationRunning] = useState(false);
   const [sequenceOfMarks, setSequenceOfMarks] = useState([]);
   const [selectingSequence, setSelectingSequence] = useState(false);
+  const [raceStartTime, setRaceStartTime] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [distanceTraveled, setDistanceTraveled] = useState(0);
   const mapRef = useRef(null);
   const simulationIntervalRef = useRef(null);
+  const timerIntervalRef = useRef(null);
 
   useEffect(() => {
-    Geolocation.getCurrentPosition(
-      position => {
-        const {latitude, longitude} = position.coords;
-        setInitialRegion({
-          latitude,
-          longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        });
-        setCenterCoordinate({latitude, longitude});
-      },
-      error => {
-        console.error('Error getting current location:', error);
-        setInitialRegion({
-          latitude: 37.78825,
-          longitude: -122.4324,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        });
-        setCenterCoordinate({latitude: 37.78825, longitude: -122.4324});
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 1000,
-      },
-    );
+    const getCurrentLocation = async () => {
+      if (Platform.OS === 'ios') {
+        Geolocation.requestAuthorization();
+      } else if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message: 'This app needs access to your location',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('Location permission denied');
+          return;
+        }
+      }
+
+      Geolocation.getCurrentPosition(
+        position => {
+          const {latitude, longitude} = position.coords;
+          console.log(`Current location: (${latitude}, ${longitude})`);
+          setInitialRegion({
+            latitude,
+            longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          });
+          setCenterCoordinate({latitude, longitude});
+        },
+        error => {
+          console.error('Error getting current location:', error);
+          setInitialRegion({
+            latitude: 53.2009,
+            longitude: -6.1111,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          });
+          setCenterCoordinate({latitude: 53.2009, longitude: -6.1111});
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 1000,
+        },
+      );
+    };
+
+    getCurrentLocation();
   }, []);
 
   const handleMapPress = event => {
@@ -147,12 +184,14 @@ const RaceOverviewScreen = () => {
   const startTimer = () => {
     setTimerRunning(true);
     const endTime = Date.now() + timerMinutes * 60000;
-    const interval = setInterval(() => {
+    timerIntervalRef.current = setInterval(() => {
       const remainingTime = endTime - Date.now();
       if (remainingTime <= 0) {
-        clearInterval(interval);
+        clearInterval(timerIntervalRef.current);
         setTimer(null);
         setTimerRunning(false);
+        setRaceStartTime(Date.now()); // Start race time when timer hits zero
+        startSimulation(); // Start boat simulation
       } else {
         setTimer(Math.ceil(remainingTime / 1000));
       }
@@ -160,6 +199,7 @@ const RaceOverviewScreen = () => {
   };
 
   const resetTimer = () => {
+    clearInterval(timerIntervalRef.current);
     setTimer(null);
     setTimerRunning(false);
   };
@@ -272,6 +312,15 @@ const RaceOverviewScreen = () => {
     return R * c; // Distance in km
   };
 
+  const calculateBearing = (lat1, lon1, lat2, lon2) => {
+    const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+    const x =
+      Math.cos(lat1) * Math.sin(lat2) -
+      Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+    const bearing = (Math.atan2(y, x) * 180) / Math.PI;
+    return (bearing + 360) % 360; // Normalize to 0-360 degrees
+  };
+
   const calculateIntermediateWaypoint = (position, heading, distance) => {
     const R = 6371; // Radius of the Earth in km
     const d = distance / R; // Angular distance in radians
@@ -311,18 +360,22 @@ const RaceOverviewScreen = () => {
         nextMark.latitude,
         nextMark.longitude,
       );
-      const headingToNextMark = Math.atan2(
-        nextMark.latitude - currentPosition.latitude,
-        nextMark.longitude - currentPosition.longitude,
+      const headingToNextMark = calculateBearing(
+        currentPosition.latitude,
+        currentPosition.longitude,
+        nextMark.latitude,
+        nextMark.longitude,
       );
-      const angleToNextMark = (headingToNextMark * 180) / Math.PI;
-      const relativeWindAngle = Math.abs(angleToNextMark - windInfo.direction);
+      const relativeWindAngle = Math.abs(
+        headingToNextMark - windInfo.direction,
+      );
       const speed = getSpeedFromPolars(relativeWindAngle);
-      const tack = calculateTack(angleToNextMark);
+      const tack = calculateTack(headingToNextMark);
       const pointOfSail = calculateSailingPoint(relativeWindAngle);
+      const timeToNextMark = (distanceToNextMark / speed) * 3600; // in seconds
 
       console.log(
-        `Plan Step: Heading ${angleToNextMark.toFixed(
+        `Plan Step: Heading ${headingToNextMark.toFixed(
           2,
         )} degrees, Speed ${speed.toFixed(
           2,
@@ -332,62 +385,51 @@ const RaceOverviewScreen = () => {
           4,
         )}) to (${nextMark.latitude.toFixed(4)}, ${nextMark.longitude.toFixed(
           4,
-        )}), Tack: ${tack}, Point of Sail: ${pointOfSail}`,
+        )}), Tack: ${tack}, Point of Sail: ${pointOfSail}, Time: ${timeToNextMark.toFixed(
+          2,
+        )} seconds`,
       );
 
-      // Check if tacking is required
+      // Add intermediate waypoints for tacking
       if (relativeWindAngle < 30 || relativeWindAngle > 150) {
-        // Add intermediate waypoint to simulate tacking
         const tackAngle =
-          tack === 'Starboard' ? angleToNextMark + 60 : angleToNextMark - 60;
+          tack === 'Starboard'
+            ? headingToNextMark + 60
+            : headingToNextMark - 60;
         const intermediateWaypoint = calculateIntermediateWaypoint(
           currentPosition,
           tackAngle,
           distanceToNextMark / 2,
         );
-        const distanceToIntermediateWaypoint = calculateDistance(
-          currentPosition.latitude,
-          currentPosition.longitude,
-          intermediateWaypoint.latitude,
-          intermediateWaypoint.longitude,
-        );
 
-        // Check if intermediate waypoint makes sense (is closer to the next mark)
-        if (distanceToIntermediateWaypoint < distanceToNextMark) {
-          plan.push({
-            from: {...currentPosition},
-            to: {...intermediateWaypoint},
-            heading: tackAngle,
-            speed: getSpeedFromPolars(Math.abs(tackAngle - windInfo.direction)),
-            tack,
-            pointOfSail: 'Tacking',
-            distance: distanceToIntermediateWaypoint,
-          });
-          currentPosition = intermediateWaypoint;
-        } else {
-          // If not making progress, proceed to the next mark directly
-          plan.push({
-            from: {...currentPosition},
-            to: {...nextMark},
-            heading: angleToNextMark,
-            speed,
-            tack,
-            pointOfSail,
-            distance: distanceToNextMark,
-          });
-          currentPosition = nextMark;
-          remainingMarks.shift();
-        }
+        plan.push({
+          from: {...currentPosition},
+          to: {...intermediateWaypoint},
+          heading: tackAngle,
+          speed: getSpeedFromPolars(Math.abs(tackAngle - windInfo.direction)),
+          tack,
+          pointOfSail: 'Tacking',
+          distance: distanceToNextMark / 2,
+          time:
+            (distanceToNextMark /
+              2 /
+              getSpeedFromPolars(Math.abs(tackAngle - windInfo.direction))) *
+            3600,
+        });
+
+        currentPosition = intermediateWaypoint;
       } else {
         plan.push({
           from: {...currentPosition},
           to: {...nextMark},
-          heading: angleToNextMark,
+          heading: headingToNextMark,
           speed,
           tack,
           pointOfSail,
           distance: distanceToNextMark,
+          time: timeToNextMark,
         });
+
         currentPosition = nextMark;
         remainingMarks.shift();
       }
@@ -416,8 +458,8 @@ const RaceOverviewScreen = () => {
 
     setSimulationRunning(true);
     setBoatTrail([boatPosition]);
-
     let currentStepIndex = 0;
+    let currentStepStartTime = Date.now();
 
     simulationIntervalRef.current = setInterval(() => {
       if (currentStepIndex >= racePlan.length) {
@@ -426,21 +468,34 @@ const RaceOverviewScreen = () => {
       }
 
       const currentStep = racePlan[currentStepIndex];
-      setBoatPosition(currentStep.to);
-      setBoatHeading(currentStep.heading);
-      setBoatTrail(prevTrail => [...prevTrail, currentStep.to]);
+      const elapsedTime = (Date.now() - currentStepStartTime) / 1000; // in seconds
 
-      console.log(
-        `Boat Position: ${currentStep.to.latitude.toFixed(
-          4,
-        )}, ${currentStep.to.longitude.toFixed(4)}`,
+      if (elapsedTime >= currentStep.time) {
+        // Move to the next step
+        currentStepIndex += 1;
+        if (currentStepIndex < racePlan.length) {
+          currentStepStartTime = Date.now();
+        }
+      } else {
+        // Calculate intermediate position
+        const distanceCovered =
+          (elapsedTime / currentStep.time) * currentStep.distance;
+        const newBoatPosition = calculateIntermediateWaypoint(
+          currentStep.from,
+          currentStep.heading,
+          distanceCovered,
+        );
+
+        setBoatPosition(newBoatPosition);
+        setBoatHeading(currentStep.heading);
+        setBoatSpeed(currentStep.speed);
+        setBoatTrail(prevTrail => [...prevTrail, newBoatPosition]);
+      }
+
+      setElapsedTime(prevTime => prevTime + 1);
+      setDistanceTraveled(
+        prevDistance => prevDistance + currentStep.distance / currentStep.time,
       );
-      console.log(`Boat Heading: ${currentStep.heading.toFixed(2)} degrees`);
-      console.log(`Boat Speed: ${currentStep.speed.toFixed(2)} knots`);
-      console.log(`Tack: ${currentStep.tack}`);
-      console.log(`Point of Sail: ${currentStep.pointOfSail}`);
-
-      currentStepIndex += 1;
     }, 1000);
   };
 
@@ -453,15 +508,19 @@ const RaceOverviewScreen = () => {
     stopSimulation();
     setBoatPosition(null);
     setBoatHeading(0);
+    setBoatSpeed(0);
     setBoatTrail([]);
     setStartLine({marker1: null, marker2: null});
     setSequenceOfMarks([]);
+    setElapsedTime(0);
+    setDistanceTraveled(0);
     console.log('Race reset.');
   };
 
   const selectBoatStartPosition = event => {
     setBoatPosition(event.nativeEvent.coordinate);
     setBoatHeading(0); // Reset heading
+    setBoatSpeed(0); // Reset speed
     console.log('Boat starting position set:', event.nativeEvent.coordinate);
   };
 
@@ -501,7 +560,7 @@ const RaceOverviewScreen = () => {
           {sequenceOfMarks.length > 0 && (
             <Polyline
               coordinates={sequenceOfMarks}
-              strokeColor="blue"
+              strokeColor="white"
               strokeWidth={2}
             />
           )}
@@ -549,12 +608,27 @@ const RaceOverviewScreen = () => {
         </MapView>
       )}
 
+      <View style={styles.infoContainer}>
+        <Text style={styles.infoText}>Heading: {boatHeading.toFixed(2)}°</Text>
+        <Text style={styles.infoText}>Speed: {boatSpeed.toFixed(2)} knots</Text>
+        <Text style={styles.infoText}>
+          Position: {boatPosition?.latitude.toFixed(4)},{' '}
+          {boatPosition?.longitude.toFixed(4)}
+        </Text>
+        <Text style={styles.infoText}>
+          Time: {elapsedTime.toFixed(2)} seconds
+        </Text>
+        <Text style={styles.infoText}>
+          Distance: {distanceTraveled.toFixed(2)} NM
+        </Text>
+      </View>
+
       <View style={styles.targetContainer}>
         <Icon name="cross" size={24} color="red" />
       </View>
 
       {!isInfoTableMinimized && (
-        <View style={styles.infoContainer}>
+        <View style={styles.infoTable}>
           <TouchableOpacity
             style={styles.minimizeButton}
             onPress={() => setIsInfoTableMinimized(true)}>
@@ -741,6 +815,19 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 10,
+    elevation: 5,
+  },
+  infoText: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  infoTable: {
+    position: 'absolute',
     bottom: 20,
     left: 10,
     right: 10, // Added to stretch the container across the width
@@ -753,10 +840,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 5,
-  },
-  infoText: {
-    marginLeft: 5,
-    fontSize: 12,
   },
   infoTextLarge: {
     fontSize: 11,

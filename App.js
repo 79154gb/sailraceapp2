@@ -11,6 +11,8 @@ import LoginScreen from './screens/LoginScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import BoatPolarsScreen from './screens/BoatPolarsScreen';
 import YourBoatShedScreen from './screens/YourBoatShedScreen'; // Import the new screen
+import ActivitiesScreen from './screens/ActivitiesScreen'; // Import the ActivitiesScreen
+import UploadActivityScreen from './screens/UploadActivityScreen';
 
 const Stack = createStackNavigator();
 
@@ -53,6 +55,16 @@ const App = () => {
         <Stack.Screen
           name="RaceOverviewScreen"
           component={RaceOverviewScreen}
+        />
+        <Stack.Screen
+          name="ActivitiesScreen"
+          options={{title: 'Activities'}}
+          component={ActivitiesScreen}
+        />
+        <Stack.Screen
+          name="UploadActivityScreen"
+          component={UploadActivityScreen}
+          options={{title: 'Upload Activity'}}
         />
       </Stack.Navigator>
     </NavigationContainer>

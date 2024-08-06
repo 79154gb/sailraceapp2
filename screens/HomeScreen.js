@@ -14,6 +14,10 @@ const HomeScreen = ({navigation, route}) => {
     navigation.navigate('YourBoatShedScreen', {userId}); // Updated to navigate to YourBoatShed screen
   };
 
+  const navigateToActivities = () => {
+    navigation.navigate('ActivitiesScreen', {userId}); // Navigate to ActivitiesScreen
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -30,12 +34,17 @@ const HomeScreen = ({navigation, route}) => {
       <TouchableOpacity
         style={styles.button}
         onPress={navigateToSailboatCategories}>
-        <Text style={styles.buttonText}>Select Your Boat</Text>
+        <Text style={styles.buttonText}>Select A New Boat</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button, styles.boatShedButton]}
         onPress={navigateToBoatShed}>
-        <Text style={styles.buttonText}>Your Boat Shed</Text>
+        <Text style={styles.buttonText}>Go To Your Boat Shed</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.button, styles.activitiesButton]}
+        onPress={navigateToActivities}>
+        <Text style={styles.buttonText}>Go To Activities</Text>
       </TouchableOpacity>
     </View>
   );
@@ -46,6 +55,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
   background: {
     position: 'absolute',
@@ -55,40 +65,39 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   logo: {
-    width: 500,
-    height: 500,
-    position: 'absolute',
-    top: 170,
+    width: 300,
+    height: 300,
     resizeMode: 'cover',
   },
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#9af4fd',
-    position: 'absolute',
-    top: 30,
+    marginTop: 20,
   },
   subText: {
     fontSize: 18,
     color: '#9af4fd',
-    position: 'absolute',
-    top: 70,
+    marginBottom: 20,
   },
   button: {
     backgroundColor: '#FFAC94',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
-    position: 'absolute',
-    top: 150,
+    marginTop: 20,
   },
   boatShedButton: {
-    top: 210, // Adjust this value to create space between the buttons
+    marginTop: 20, // Adjust this value to create space between the buttons
+  },
+  activitiesButton: {
+    marginTop: 20, // Adjust this value to create space between the buttons
   },
   buttonText: {
     color: '#9af4fd',
     fontSize: 18,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

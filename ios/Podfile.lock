@@ -952,6 +952,8 @@ PODS:
     - React-debug
   - react-native-compass-heading (1.5.0):
     - React-Core
+  - react-native-document-picker (9.3.0):
+    - React-Core
   - react-native-geolocation (3.2.1):
     - glog
     - RCT-Folly (= 2022.05.16.00)
@@ -1211,6 +1213,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - react-native-compass-heading (from `../node_modules/react-native-compass-heading`)
+  - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
   - react-native-maps (from `../node_modules/react-native-maps`)
   - react-native-orientation-locker (from `../node_modules/react-native-orientation-locker`)
@@ -1322,6 +1325,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   react-native-compass-heading:
     :path: "../node_modules/react-native-compass-heading"
+  react-native-document-picker:
+    :path: "../node_modules/react-native-document-picker"
   react-native-geolocation:
     :path: "../node_modules/@react-native-community/geolocation"
   react-native-maps:
@@ -1430,6 +1435,7 @@ SPEC CHECKSUMS:
   React-logger: 3eb80a977f0d9669468ef641a5e1fabbc50a09ec
   React-Mapbuffer: 84ea43c6c6232049135b1550b8c60b2faac19fab
   react-native-compass-heading: 1b4403d1c99dfd8311073ca8fc52bfc8e365cfac
+  react-native-document-picker: 5b97e24a7f1a1e4a50a72c540a043f32d29a70a2
   react-native-geolocation: ed9e1d132f576b9a4a503af46f9704413ea0dec1
   react-native-maps: 7b2c2cee95271592a92ba485eea1dec66a363a6e
   react-native-orientation-locker: 5819fd23ca89cbac0d736fb4314745f62716d517
