@@ -13,6 +13,7 @@ import BoatPolarsScreen from './screens/BoatPolarsScreen';
 import YourBoatShedScreen from './screens/YourBoatShedScreen'; // Import the new screen
 import ActivitiesScreen from './screens/ActivitiesScreen'; // Import the ActivitiesScreen
 import UploadActivityScreen from './screens/UploadActivityScreen';
+import RecordActivityScreen from './screens/RecordActivityScreen';
 
 const Stack = createStackNavigator();
 
@@ -65,6 +66,11 @@ const App = () => {
           name="UploadActivityScreen"
           component={UploadActivityScreen}
           options={{title: 'Upload Activity'}}
+        />
+        <Stack.Screen
+          name="RecordActivityScreen"
+          options={{title: 'Record Activity'}}
+          component={RecordActivityScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

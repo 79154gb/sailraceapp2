@@ -212,3 +212,14 @@ export const deleteActivity = async (userId, activityId) => {
     throw error;
   }
 };
+export const saveRecordedActivity = async (userId, activityData) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/activities/upload`, {
+      userId,
+      ...activityData,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {View, Button, FlatList, StyleSheet} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {getUserActivities} from '../api/api';
+import {getUserActivities, deleteActivity} from '../api/api'; // Make sure deleteActivity is imported
 import MapItem from '../components/MapItem';
 
 const ActivitiesScreen = ({route, navigation}) => {
@@ -21,7 +21,18 @@ const ActivitiesScreen = ({route, navigation}) => {
     fetchActivities();
   }, [userId]);
 
-  const renderItem = ({item}) => <MapItem item={item} />;
+  const handleDelete = async activityId => {
+    try {
+      await deleteActivity(userId, activityId); // Call the API to delete the activity
+      setActivities(activities.filter(activity => activity.id !== activityId)); // Update the state to remove the deleted activity
+    } catch (error) {
+      console.error('Failed to delete activity:', error);
+    }
+  };
+
+  const renderItem = ({item}) => (
+    <MapItem item={item} onDelete={handleDelete} />
+  );
 
   return (
     <View style={styles.container}>
@@ -39,6 +50,12 @@ const ActivitiesScreen = ({route, navigation}) => {
         onPress={() => navigation.navigate('UploadActivityScreen', {userId})}
         color="#FFAC94"
       />
+      <Button
+        title="Record Activity"
+        onPress={() => navigation.navigate('RecordActivityScreen', {userId})}
+        color="#FFAC94"
+        style={styles.recordButton}
+      />
     </View>
   );
 };
@@ -55,6 +72,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  recordButton: {
+    marginTop: 10,
   },
 });
 
