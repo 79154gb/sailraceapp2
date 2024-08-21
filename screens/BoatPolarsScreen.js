@@ -211,7 +211,7 @@ const BoatPolarsScreen = ({route, navigation}) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <LinearGradient
-        colors={['#222831', '#37414f']}
+        colors={['#000000', '#000000']}
         style={styles.background}
       />
       <Text style={styles.header}>Boat Polars</Text>
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   button: {
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#9af4fd',
-    fontWeight: 'bold',
+    fontWeight: 'normal',
     textAlign: 'center',
   },
 });

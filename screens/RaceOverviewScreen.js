@@ -279,18 +279,48 @@ const RaceOverviewScreen = () => {
 
   const getSpeedFromPolars = angle => {
     for (let i = 0; i < boatPolars.length - 1; i++) {
-      if (angle >= boatPolars[i].angle && angle <= boatPolars[i + 1].angle) {
-        return boatPolars[i].speed;
+      const angle1 = boatPolars[i].angle;
+      const angle2 = boatPolars[i + 1].angle;
+      const speed1 = boatPolars[i].speed;
+      const speed2 = boatPolars[i + 1].speed;
+
+      // Check if the given angle is between angle1 and angle2
+      if (angle >= angle1 && angle <= angle2) {
+        // Perform linear interpolation
+        const interpolatedSpeed =
+          speed1 + ((angle - angle1) * (speed2 - speed1)) / (angle2 - angle1);
+        return interpolatedSpeed;
       }
     }
-    return 5; // Default speed for angles not covered in the polars
+
+    // If the angle is not within the range of the boatPolars array,
+    // you can decide to return a default value or extrapolate.
+
+    if (angle < boatPolars[0].angle) {
+      // Angle is less than the smallest angle in the polars
+      return boatPolars[0].speed;
+    } else if (angle > boatPolars[boatPolars.length - 1].angle) {
+      // Angle is greater than the largest angle in the polars
+      return boatPolars[boatPolars.length - 1].speed;
+    }
+
+    // Fallback in case of an unexpected situation
+    return 5; // Default speed if the angle is outside expected ranges
   };
 
   const calculateSailingPoint = angle => {
-    if (angle > 345 || angle <= 15) return 'Running';
-    if (angle > 15 && angle <= 75) return 'Broad Reach';
-    if (angle > 75 && angle <= 105) return 'Beam Reach';
-    if (angle > 105 && angle <= 165) return 'Close Reach';
+    if (angle > 345 || angle <= 15) {
+      return 'Running';
+    }
+    if (angle > 15 && angle <= 75) {
+      return 'Broad Reach';
+    }
+    if (angle > 75 && angle <= 105) {
+      return 'Beam Reach';
+    }
+    if (angle > 105 && angle <= 165) {
+      return 'Close Reach';
+    }
     return 'Beating'; // Default to Beating if none of the above
   };
 
@@ -299,6 +329,19 @@ const RaceOverviewScreen = () => {
   };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (
+      typeof lat1 !== 'number' ||
+      typeof lon1 !== 'number' ||
+      typeof lat2 !== 'number' ||
+      typeof lon2 !== 'number'
+    ) {
+      console.error(
+        'Invalid latitude or longitude input for distance calculation:',
+        {lat1, lon1, lat2, lon2},
+      );
+      return NaN; // Return NaN or a suitable error value
+    }
+
     const R = 6371; // Radius of the Earth in km
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -313,6 +356,19 @@ const RaceOverviewScreen = () => {
   };
 
   const calculateBearing = (lat1, lon1, lat2, lon2) => {
+    if (
+      typeof lat1 !== 'number' ||
+      typeof lon1 !== 'number' ||
+      typeof lat2 !== 'number' ||
+      typeof lon2 !== 'number'
+    ) {
+      console.error(
+        'Invalid latitude or longitude input for bearing calculation:',
+        {lat1, lon1, lat2, lon2},
+      );
+      return NaN; // Return NaN or a suitable error value
+    }
+
     const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
     const x =
       Math.cos(lat1) * Math.sin(lat2) -
@@ -322,6 +378,25 @@ const RaceOverviewScreen = () => {
   };
 
   const calculateIntermediateWaypoint = (position, heading, distance) => {
+    if (
+      !position ||
+      typeof position.latitude !== 'number' ||
+      typeof position.longitude !== 'number'
+    ) {
+      console.error('Invalid position input:', position);
+      return position; // Return original position if invalid
+    }
+
+    if (typeof heading !== 'number' || isNaN(heading)) {
+      console.error('Invalid heading input:', heading);
+      heading = 0; // Default to 0 if heading is invalid
+    }
+
+    if (typeof distance !== 'number' || distance <= 0 || isNaN(distance)) {
+      console.error('Invalid distance input:', distance);
+      return position; // Return original position if distance is invalid
+    }
+
     const R = 6371; // Radius of the Earth in km
     const d = distance / R; // Angular distance in radians
     const bearing = (heading * Math.PI) / 180; // Convert bearing to radians
@@ -329,10 +404,24 @@ const RaceOverviewScreen = () => {
     const lat1 = (position.latitude * Math.PI) / 180; // Current latitude in radians
     const lon1 = (position.longitude * Math.PI) / 180; // Current longitude in radians
 
+    if (isNaN(lat1) || isNaN(lon1)) {
+      console.error('Invalid latitude/longitude after conversion:', {
+        lat1,
+        lon1,
+      });
+      return position;
+    }
+
     const lat2 = Math.asin(
       Math.sin(lat1) * Math.cos(d) +
         Math.cos(lat1) * Math.sin(d) * Math.cos(bearing),
     );
+
+    if (isNaN(lat2)) {
+      console.error('Invalid calculation for lat2:', {lat1, d, bearing});
+      return position;
+    }
+
     const lon2 =
       lon1 +
       Math.atan2(
@@ -340,108 +429,205 @@ const RaceOverviewScreen = () => {
         Math.cos(d) - Math.sin(lat1) * Math.sin(lat2),
       );
 
+    if (isNaN(lon2)) {
+      console.error('Invalid calculation for lon2:', {
+        lon1,
+        bearing,
+        d,
+        lat1,
+        lat2,
+      });
+      return position;
+    }
+
+    const newLatitude = (lat2 * 180) / Math.PI; // Convert back to degrees
+    const newLongitude = (lon2 * 180) / Math.PI; // Convert back to degrees
+
+    if (isNaN(newLatitude) || isNaN(newLongitude)) {
+      console.error('Invalid waypoint calculation:', {
+        newLatitude,
+        newLongitude,
+      });
+      return position; // Return original position if calculation fails
+    }
+
     return {
-      latitude: (lat2 * 180) / Math.PI, // Convert back to degrees
-      longitude: (lon2 * 180) / Math.PI, // Convert back to degrees
+      latitude: newLatitude,
+      longitude: newLongitude,
     };
   };
 
-  const preCalculateRacePlan = () => {
-    const plan = [];
-    let currentPosition = boatPosition;
-    let remainingMarks = [startLine.marker2, ...sequenceOfMarks];
-    let maxIterations = 1000; // to prevent infinite loops
+  const calculateOptimalRoute = (
+    currentPosition,
+    startLine,
+    sequenceOfMarks,
+    windInfo,
+    tideInfo,
+  ) => {
+    let currentMarkIndex = 0;
+    let bestRoute = [];
+    let maxIterations = 1000; // Prevent infinite loops
 
-    while (remainingMarks.length > 0 && maxIterations > 0) {
-      const nextMark = remainingMarks[0];
-      const distanceToNextMark = calculateDistance(
-        currentPosition.latitude,
-        currentPosition.longitude,
-        nextMark.latitude,
-        nextMark.longitude,
-      );
-      const headingToNextMark = calculateBearing(
-        currentPosition.latitude,
-        currentPosition.longitude,
-        nextMark.latitude,
-        nextMark.longitude,
-      );
-      const relativeWindAngle = Math.abs(
-        headingToNextMark - windInfo.direction,
-      );
-      const speed = getSpeedFromPolars(relativeWindAngle);
-      const tack = calculateTack(headingToNextMark);
-      const pointOfSail = calculateSailingPoint(relativeWindAngle);
-      const timeToNextMark = (distanceToNextMark / speed) * 3600; // in seconds
-
-      console.log(
-        `Plan Step: Heading ${headingToNextMark.toFixed(
-          2,
-        )} degrees, Speed ${speed.toFixed(
-          2,
-        )} knots, from (${currentPosition.latitude.toFixed(
-          4,
-        )}, ${currentPosition.longitude.toFixed(
-          4,
-        )}) to (${nextMark.latitude.toFixed(4)}, ${nextMark.longitude.toFixed(
-          4,
-        )}), Tack: ${tack}, Point of Sail: ${pointOfSail}, Time: ${timeToNextMark.toFixed(
-          2,
-        )} seconds`,
+    while (currentMarkIndex < sequenceOfMarks.length && maxIterations > 0) {
+      const nextMark = sequenceOfMarks[currentMarkIndex];
+      const bestHeading = findBestHeadingWithTide(
+        currentPosition,
+        nextMark,
+        windInfo,
+        tideInfo,
       );
 
-      // Add intermediate waypoints for tacking
-      if (relativeWindAngle < 30 || relativeWindAngle > 150) {
-        const tackAngle =
-          tack === 'Starboard'
-            ? headingToNextMark + 60
-            : headingToNextMark - 60;
+      const routeSegment = {
+        from: currentPosition,
+        to: nextMark,
+        heading: bestHeading.heading,
+        speed: bestHeading.speed,
+        time: bestHeading.time,
+      };
+
+      // Handle intermediate waypoints if necessary (e.g., tacking upwind)
+      if (calculateSailingPoint(bestHeading.heading) === 'Beating') {
         const intermediateWaypoint = calculateIntermediateWaypoint(
           currentPosition,
-          tackAngle,
-          distanceToNextMark / 2,
+          bestHeading.cog,
+          bestHeading.time / 2,
         );
-
-        plan.push({
-          from: {...currentPosition},
-          to: {...intermediateWaypoint},
-          heading: tackAngle,
-          speed: getSpeedFromPolars(Math.abs(tackAngle - windInfo.direction)),
-          tack,
-          pointOfSail: 'Tacking',
-          distance: distanceToNextMark / 2,
-          time:
-            (distanceToNextMark /
-              2 /
-              getSpeedFromPolars(Math.abs(tackAngle - windInfo.direction))) *
-            3600,
+        bestRoute.push({
+          from: currentPosition,
+          to: intermediateWaypoint,
+          heading: bestHeading.heading,
+          speed: bestHeading.speed,
+          time: bestHeading.time / 2,
         });
-
-        currentPosition = intermediateWaypoint;
-      } else {
-        plan.push({
-          from: {...currentPosition},
-          to: {...nextMark},
-          heading: headingToNextMark,
-          speed,
-          tack,
-          pointOfSail,
-          distance: distanceToNextMark,
-          time: timeToNextMark,
-        });
-
-        currentPosition = nextMark;
-        remainingMarks.shift();
+        currentPosition = intermediateWaypoint; // Update current position to waypoint
       }
 
+      bestRoute.push(routeSegment);
+      currentPosition = nextMark; // Move to next mark
+      currentMarkIndex++; // Advance to the next mark
       maxIterations--;
     }
 
     if (maxIterations <= 0) {
-      console.error('Infinite loop detected in preCalculateRacePlan');
+      console.error('Infinite loop detected in calculateOptimalRoute');
     }
 
-    return plan;
+    return bestRoute;
+  };
+
+  const findBestHeadingWithTide = (
+    currentPosition,
+    nextMark,
+    windInfo,
+    tideInfo,
+  ) => {
+    let bestVMG = -Infinity;
+    let bestHeading = null;
+
+    for (let angle = 0; angle <= 360; angle += 1) {
+      const relativeWindAngle = Math.abs(angle - windInfo.direction);
+      const boatSpeed = getSpeedFromPolars(relativeWindAngle);
+
+      if (isNaN(boatSpeed) || boatSpeed <= 0) {
+        continue;
+      }
+
+      const boatVelocityX = boatSpeed * Math.cos((angle * Math.PI) / 180);
+      const boatVelocityY = boatSpeed * Math.sin((angle * Math.PI) / 180);
+      const tideVelocityX =
+        tideInfo.speed * Math.cos((tideInfo.direction * Math.PI) / 180);
+      const tideVelocityY =
+        tideInfo.speed * Math.sin((tideInfo.direction * Math.PI) / 180);
+
+      const sogX = boatVelocityX + tideVelocityX;
+      const sogY = boatVelocityY + tideVelocityY;
+      const sog = Math.sqrt(sogX * sogX + sogY * sogY);
+      const cog = (Math.atan2(sogY, sogX) * 180) / Math.PI;
+
+      const bearingToNextMark = calculateBearing(
+        currentPosition.latitude,
+        currentPosition.longitude,
+        nextMark.latitude,
+        nextMark.longitude,
+      );
+      const vmg = sog * Math.cos(((bearingToNextMark - cog) * Math.PI) / 180);
+
+      if (isNaN(vmg) || vmg <= 0) {
+        continue; // Skip negative or NaN VMG values
+      }
+
+      if (vmg > bestVMG) {
+        bestVMG = vmg;
+        bestHeading = {
+          heading: angle,
+          speed: sog,
+          cog: cog,
+          vmg: vmg,
+        };
+      }
+    }
+
+    if (!bestHeading) {
+      console.error('Failed to find a valid heading with positive VMG.');
+      return {
+        heading: 0, // Default to 0 if no valid heading was found
+        speed: 0,
+        cog: 0,
+        vmg: 0,
+      };
+    }
+
+    const timeToNextMark = calculateTimeToNextMark(
+      currentPosition,
+      nextMark,
+      bestHeading.cog,
+      bestHeading.speed,
+    );
+
+    return {
+      heading: bestHeading.heading,
+      speed: bestHeading.speed,
+      time: timeToNextMark > 0 ? timeToNextMark : 0,
+    };
+  };
+
+  const calculateTimeToNextMark = (currentPosition, nextMark, cog, sog) => {
+    if (
+      !currentPosition ||
+      !nextMark ||
+      typeof cog !== 'number' ||
+      typeof sog !== 'number'
+    ) {
+      console.error('Invalid inputs for calculating time to next mark:', {
+        currentPosition,
+        nextMark,
+        cog,
+        sog,
+      });
+      return NaN;
+    }
+
+    const distance = calculateDistance(
+      currentPosition.latitude,
+      currentPosition.longitude,
+      nextMark.latitude,
+      nextMark.longitude,
+    );
+    if (isNaN(distance) || distance <= 0) {
+      console.error('Calculated distance is NaN or invalid:', {
+        currentPosition,
+        nextMark,
+      });
+      return NaN;
+    }
+
+    const time = (distance / sog) * 3600; // time in seconds
+    if (isNaN(time) || time <= 0) {
+      console.error('Calculated time is NaN or invalid:', {distance, sog});
+      return NaN;
+    }
+
+    return time;
   };
 
   const startSimulation = () => {
@@ -454,7 +640,18 @@ const RaceOverviewScreen = () => {
       return;
     }
 
-    const racePlan = preCalculateRacePlan();
+    const racePlan = calculateOptimalRoute(
+      boatPosition,
+      startLine,
+      sequenceOfMarks,
+      windInfo,
+      tideInfo,
+    );
+
+    if (!racePlan || racePlan.length === 0) {
+      Alert.alert('Error', 'Failed to calculate a valid race plan.');
+      return;
+    }
 
     setSimulationRunning(true);
     setBoatTrail([boatPosition]);

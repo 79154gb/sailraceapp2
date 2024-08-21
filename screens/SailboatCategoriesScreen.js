@@ -15,7 +15,7 @@ const SailboatCategoriesScreen = ({navigation, route}) => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#222831', '#37414f']}
+        colors={['#000000', '#000000']}
         style={styles.background}
       />
       <TouchableOpacity
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   button: {
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#9af4fd',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: 'normal',
   },
 });
 

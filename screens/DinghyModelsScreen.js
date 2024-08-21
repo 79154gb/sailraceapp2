@@ -45,7 +45,7 @@ const DinghyModelsScreen = ({route, navigation}) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#000000" />
       </View>
     );
   }
@@ -65,9 +65,15 @@ const DinghyModelsScreen = ({route, navigation}) => {
           containerStyle={styles.dropDownContainer}
           style={styles.dropDown}
           itemStyle={styles.dropDownItem}
-          dropDownStyle={styles.dropDownDropdown}
+          dropDownContainerStyle={styles.dropDownDropdown}
           labelStyle={styles.dropDownLabel}
+          textStyle={styles.textStyle}
           placeholder="Select model"
+          placeholderStyle={{
+            color: '#9af4fd',
+            fontSize: 16,
+            fontWeight: 'normal',
+          }}
           onChangeValue={item => handleModelSelect(item)}
           listMode="SCROLLVIEW"
           modalProps={{
@@ -86,7 +92,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#222831',
+    backgroundColor: '#000000',
   },
   loadingContainer: {
     flex: 1,
@@ -99,17 +105,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   dropDown: {
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f', // Matching the "Select model" background color
   },
   dropDownItem: {
     justifyContent: 'flex-start',
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f', // Matching the "Select model" background color
   },
   dropDownDropdown: {
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f', // Matching the "Select model" background color
   },
   dropDownLabel: {
     color: '#9af4fd',
+    fontSize: 16,
+    fontWeight: 'normal',
+  },
+  textStyle: {
+    color: '#9af4fd', // Matching the text color of "Select model"
+    fontSize: 16,
+    fontWeight: 'normal',
   },
 });
 

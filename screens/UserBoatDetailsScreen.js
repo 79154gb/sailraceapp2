@@ -136,7 +136,7 @@ const UserBoatDetailsScreen = ({route, navigation}) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <LinearGradient
-        colors={['#222831', '#37414f']}
+        colors={['#000000', '#000000']}
         style={styles.background}
       />
       <Text style={styles.header}>Boat Details</Text>
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   button: {
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#9af4fd',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: 'normal',
     textAlign: 'center',
   },
 });

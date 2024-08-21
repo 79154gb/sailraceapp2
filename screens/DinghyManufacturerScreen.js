@@ -59,9 +59,15 @@ const DinghyManufacturerScreen = ({navigation, route}) => {
           containerStyle={styles.dropDownContainer}
           style={styles.dropDown}
           itemStyle={styles.dropDownItem}
-          dropDownStyle={styles.dropDownDropdown}
-          labelStyle={styles.dropDownLabel}
+          dropDownContainerStyle={styles.dropDownDropdown} // Style for dropdown container
+          textStyle={styles.textStyle} // Bold and color for dropdown items
+          labelStyle={styles.dropDownLabel} // Bold and color for selected label
           placeholder="Select manufacturer"
+          placeholderStyle={{
+            color: '#9af4fd',
+            fontSize: 16,
+            fontWeight: 'normal',
+          }} // Bold placeholder
           onChangeValue={item => handleManufacturerSelect(item)}
           listMode="SCROLLVIEW"
         />
@@ -75,7 +81,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#222831',
+    backgroundColor: '#000000',
   },
   loadingContainer: {
     flex: 1,
@@ -85,20 +91,29 @@ const styles = StyleSheet.create({
   dropDownContainer: {
     width: '80%',
     height: 40,
-    marginBottom: 20,
   },
   dropDown: {
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f', // Match the boatContainer background color
+    borderRadius: 10, // Consistent with boatContainer
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
   dropDownItem: {
     justifyContent: 'flex-start',
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f', // Match the boatContainer background color
   },
   dropDownDropdown: {
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f', // Match the boatContainer background color
   },
   dropDownLabel: {
-    color: '#9af4fd',
+    color: '#9af4fd', // Match the boatText color
+    fontSize: 16,
+    fontWeight: 'normal',
+  },
+  textStyle: {
+    color: '#9af4fd', // Match the boatText color
+    fontSize: 16,
+    fontWeight: 'normal',
   },
 });
 

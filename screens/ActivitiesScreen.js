@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, Button, FlatList, StyleSheet} from 'react-native';
+import {View, TouchableOpacity, Text, FlatList, StyleSheet} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {getUserActivities, deleteActivity} from '../api/api'; // Make sure deleteActivity is imported
 import MapItem from '../components/MapItem';
@@ -37,7 +37,7 @@ const ActivitiesScreen = ({route, navigation}) => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#222831', '#37414f']}
+        colors={['#000000', '#000000']}
         style={styles.background}
       />
       <FlatList
@@ -45,17 +45,16 @@ const ActivitiesScreen = ({route, navigation}) => {
         renderItem={renderItem}
         keyExtractor={item => item.id.toString()}
       />
-      <Button
-        title="Upload Activity"
-        onPress={() => navigation.navigate('UploadActivityScreen', {userId})}
-        color="#FFAC94"
-      />
-      <Button
-        title="Record Activity"
-        onPress={() => navigation.navigate('RecordActivityScreen', {userId})}
-        color="#FFAC94"
-        style={styles.recordButton}
-      />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('UploadActivityScreen', {userId})}>
+        <Text style={styles.buttonText}>Upload Activity</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.button, styles.recordButton]}
+        onPress={() => navigation.navigate('RecordActivityScreen', {userId})}>
+        <Text style={styles.buttonText}>Record Activity</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -72,6 +71,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  button: {
+    backgroundColor: '#37414f', // Consistent with the other buttons
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  buttonText: {
+    color: '#9af4fd', // Consistent text color
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   recordButton: {
     marginTop: 10,

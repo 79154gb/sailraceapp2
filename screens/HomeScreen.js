@@ -20,10 +20,7 @@ const HomeScreen = ({navigation, route}) => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#222831', '#37414f']}
-        style={styles.background}
-      />
+      <LinearGradient colors={['#222831']} style={styles.background} />
       <Image
         source={require('./assets/logo.png')}
         style={styles.logo}
@@ -65,8 +62,8 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   logo: {
-    width: 300,
-    height: 300,
+    width: 200,
+    height: 200,
     resizeMode: 'cover',
   },
   welcomeText: {
@@ -78,10 +75,10 @@ const styles = StyleSheet.create({
   subText: {
     fontSize: 18,
     color: '#9af4fd',
-    marginBottom: 20,
+    marginBottom: 50,
   },
   button: {
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
@@ -96,7 +93,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#9af4fd',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: 'normal',
     textAlign: 'center',
   },
 });
