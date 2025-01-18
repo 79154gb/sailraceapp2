@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#9af4fd',
+    color: '#EAECEC',
     textAlign: 'center',
     marginBottom: 20,
   },

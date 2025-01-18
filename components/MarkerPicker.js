@@ -1,54 +1,47 @@
+// components/MarkerPicker.js
+
 import React from 'react';
-import {View, TouchableOpacity, Text, FlatList, StyleSheet} from 'react-native';
-import CustomButton from './CustomButton';
+import {View, TouchableOpacity, Text, StyleSheet} from 'react-native';
+import markerTypes from '../utils/markerTypes';
 
-const markerTypes = [
-  {label: 'Start Mark 1', value: 'start1', color: 'blue'},
-  {label: 'Start Mark 2', value: 'start2', color: 'cyan'},
-  {label: 'Windward Mark', value: 'windward', color: 'red'},
-  {label: 'Leeward Mark', value: 'leeward', color: 'green'},
-  {label: 'Reach Mark', value: 'reach', color: 'yellow'},
-];
-
-const MarkerPicker = ({
-  selectedMarkerType,
-  setSelectedMarkerType,
-  placeMarkerAtCross,
-  setMarkers,
-}) => (
-  <View style={styles.markerPicker}>
-    <FlatList
-      horizontal
-      data={markerTypes}
-      renderItem={({item}) => (
+const MarkerPicker = ({selectedMarkerType, setSelectedMarkerType}) => {
+  return (
+    <View style={styles.container}>
+      {markerTypes.map(type => (
         <TouchableOpacity
-          style={styles.modalItem}
-          onPress={() => setSelectedMarkerType(item.value)}>
-          <Text>{item.label}</Text>
+          key={type.value}
+          style={[
+            styles.button,
+            selectedMarkerType === type.value && styles.selectedButton,
+          ]}
+          onPress={() => setSelectedMarkerType(type.value)}>
+          <Text style={styles.text}>{type.value}</Text>
         </TouchableOpacity>
-      )}
-      keyExtractor={item => item.value}
-    />
-    {selectedMarkerType && (
-      <CustomButton title="Place Marker Here" onPress={placeMarkerAtCross} />
-    )}
-    <CustomButton title="Clear Markers" onPress={() => setMarkers([])} />
-  </View>
-);
+      ))}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-  markerPicker: {
-    marginTop: 10,
+  container: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+    justifyContent: 'space-between',
   },
-  modalItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'gray',
-    backgroundColor: 'white',
+  button: {
+    backgroundColor: '#6c757d',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 5,
-    marginVertical: 5,
+    margin: 2,
+  },
+  selectedButton: {
+    backgroundColor: '#28a745',
+  },
+  text: {
+    color: '#fff',
+    fontSize: 12,
   },
 });
 

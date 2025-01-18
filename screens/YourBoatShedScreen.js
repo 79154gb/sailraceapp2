@@ -3,22 +3,30 @@ import {
   View,
   Text,
   StyleSheet,
-  Button,
   ScrollView,
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import {getUserBoats, deleteUserBoat} from '../api/api'; // Import the API function to get user boats
+import {getUserBoats, getUserKeelBoats, deleteUserBoat} from '../api/api';
 
 const YourBoatShedScreen = ({route, navigation}) => {
-  const {userId} = route.params; // Retrieve userId from navigation params
+  const {userId} = route.params;
   const [boats, setBoats] = useState([]);
 
   useEffect(() => {
     const fetchBoats = async () => {
       try {
         const userBoats = await getUserBoats(userId);
-        setBoats(userBoats);
+        const userKeelBoats = await getUserKeelBoats(userId);
+
+        // Normalize data structure and add a flag for keelboats
+        const keelboatsWithFlag = userKeelBoats.map(boat => ({
+          ...boat,
+          model_name: boat.model_name || boat.model, // Use model if model_name is missing
+          isKeelboat: true,
+        }));
+
+        setBoats([...userBoats, ...keelboatsWithFlag]);
       } catch (error) {
         console.error('Failed to fetch user boats:', error);
       }
@@ -27,16 +35,19 @@ const YourBoatShedScreen = ({route, navigation}) => {
     fetchBoats();
   }, [userId]);
 
-  const handleSelectBoat = (manufacturer, model, model_id) => {
-    navigation.navigate('UserBoatDetailsScreen', {
+  const handleSelectBoat = (manufacturer, model_name, model_id, isKeelboat) => {
+    const screen = isKeelboat
+      ? 'KeelboatDetailsScreen'
+      : 'UserBoatDetailsScreen';
+    navigation.navigate(screen, {
       userId,
       manufacturer,
-      model,
+      model: model_name,
       model_id,
     });
   };
 
-  const handleDeleteBoat = async (manufacturer, model) => {
+  const handleDeleteBoat = async (manufacturer, model_name, isKeelboat) => {
     Alert.alert(
       'Delete Boat',
       'Are you sure you want to delete this boat?',
@@ -49,12 +60,17 @@ const YourBoatShedScreen = ({route, navigation}) => {
           text: 'Yes',
           onPress: async () => {
             try {
-              await deleteUserBoat(userId, manufacturer, model);
+              await deleteUserBoat(
+                userId,
+                manufacturer,
+                model_name,
+                isKeelboat,
+              );
               setBoats(
                 boats.filter(
                   boat =>
                     boat.manufacturer !== manufacturer ||
-                    boat.model_name !== model,
+                    (boat.model_name || boat.model) !== model_name,
                 ),
               );
               Alert.alert('Success', 'Boat deleted successfully');
@@ -81,20 +97,24 @@ const YourBoatShedScreen = ({route, navigation}) => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.selectButton}
-              onPress={
-                () =>
-                  handleSelectBoat(
-                    boat.manufacturer,
-                    boat.model_name,
-                    boat.model_id,
-                  ) // Pass modelId
+              onPress={() =>
+                handleSelectBoat(
+                  boat.manufacturer,
+                  boat.model_name,
+                  boat.model_id,
+                  boat.isKeelboat || false,
+                )
               }>
               <Text style={styles.buttonText}>Select</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() =>
-                handleDeleteBoat(boat.manufacturer, boat.model_name)
+                handleDeleteBoat(
+                  boat.manufacturer,
+                  boat.model_name,
+                  boat.isKeelboat || false,
+                )
               }>
               <Text style={styles.buttonText}>Delete</Text>
             </TouchableOpacity>
@@ -114,7 +134,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#9af4fd',
+    color: '#EAECEC',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -131,7 +151,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   boatText: {
-    color: '#9af4fd',
+    color: '#EAECEC',
     fontSize: 16,
   },
   buttonContainer: {

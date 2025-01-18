@@ -1,7 +1,21 @@
 import React from 'react';
-import {View, Text, StyleSheet, TextInput} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  useWindowDimensions,
+} from 'react-native';
 
 const BoatPolarsComponent = ({polars, onPolarsChange}) => {
+  const {width} = useWindowDimensions();
+
+  const handleChange = (rowIndex, colIndex, value) => {
+    const updatedPolars = [...polars];
+    updatedPolars[rowIndex].values[colIndex] = value;
+    onPolarsChange(updatedPolars);
+  };
+
   if (!polars || polars.length === 0) {
     return (
       <View style={styles.noDataContainer}>
@@ -10,28 +24,29 @@ const BoatPolarsComponent = ({polars, onPolarsChange}) => {
     );
   }
 
-  const handleChange = (rowIndex, colIndex, value) => {
-    const updatedPolars = [...polars];
-    updatedPolars[rowIndex].values[colIndex] = value;
-    onPolarsChange(updatedPolars);
-  };
-
   return (
     <View style={styles.table}>
-      {polars.map((polar, rowIndex) => (
-        <View key={rowIndex} style={styles.row}>
-          <Text style={styles.label}>{polar.label}</Text>
-          {polar.values.map((value, colIndex) => (
-            <TextInput
-              key={colIndex}
-              style={styles.input}
-              value={value === null ? '' : value.toString()}
-              onChangeText={text => handleChange(rowIndex, colIndex, text)}
-              keyboardType="numeric"
-            />
-          ))}
-        </View>
-      ))}
+      {polars.map((polar, rowIndex) => {
+        // Calculate the width of each input based on the number of values in the row
+        const inputWidth = width / (polar.values.length + 1) - 10;
+
+        return (
+          <View key={rowIndex} style={styles.row}>
+            <Text style={styles.labelAbove}>{polar.label}</Text>
+            <View style={styles.inputsContainer}>
+              {polar.values.map((value, colIndex) => (
+                <TextInput
+                  key={colIndex}
+                  style={[styles.input, {width: inputWidth}]}
+                  value={value === null ? '' : value.toString()}
+                  onChangeText={text => handleChange(rowIndex, colIndex, text)}
+                  keyboardType="numeric"
+                />
+              ))}
+            </View>
+          </View>
+        );
+      })}
     </View>
   );
 };
@@ -40,29 +55,39 @@ const styles = StyleSheet.create({
   table: {
     flexDirection: 'column',
     borderWidth: 1,
-    borderColor: '#ccc',
-    backgroundColor: '#FFF',
+    borderColor: '#FFF',
+    backgroundColor: '#37414f',
+    paddingVertical: 10,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     borderBottomWidth: 1,
     borderColor: '#ccc',
+    paddingVertical: 5,
   },
-  label: {
-    flex: 1,
-    padding: 10,
+  labelAbove: {
     fontWeight: 'bold',
-    color: '#000',
+    color: '#EAECEC',
+    fontSize: 12,
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  inputsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
   },
   input: {
-    flex: 1,
     borderWidth: 1,
     borderColor: '#ccc',
-    padding: 10,
-    margin: 5,
+    paddingVertical: 5,
+    marginHorizontal: 2,
     borderRadius: 5,
-    backgroundColor: '#FFF',
+    backgroundColor: '#37414f',
+    color: '#EAECEC',
+    fontSize: 12,
+    textAlign: 'center',
   },
   noDataContainer: {
     padding: 20,
@@ -71,7 +96,7 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     fontSize: 18,
-    color: '#FFAC94',
+    color: '#EAECEC',
     textAlign: 'center',
   },
 });

@@ -64,7 +64,7 @@ const DinghyManufacturerScreen = ({navigation, route}) => {
           labelStyle={styles.dropDownLabel} // Bold and color for selected label
           placeholder="Select manufacturer"
           placeholderStyle={{
-            color: '#9af4fd',
+            color: '#EAECEC',
             fontSize: 16,
             fontWeight: 'normal',
           }} // Bold placeholder
@@ -79,8 +79,9 @@ const DinghyManufacturerScreen = ({navigation, route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'flex-start', // Align content to the top
+    paddingTop: 50, // Adjust this value to move buttons down slightly if needed
     backgroundColor: '#000000',
   },
   loadingContainer: {
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
   },
   dropDownContainer: {
     width: '80%',
-    height: 40,
+    height: 200,
   },
   dropDown: {
     backgroundColor: '#37414f', // Match the boatContainer background color
@@ -104,14 +105,15 @@ const styles = StyleSheet.create({
   },
   dropDownDropdown: {
     backgroundColor: '#37414f', // Match the boatContainer background color
+    maxHeight: 355,
   },
   dropDownLabel: {
-    color: '#9af4fd', // Match the boatText color
+    color: '#EAECEC', // Match the boatText color
     fontSize: 16,
     fontWeight: 'normal',
   },
   textStyle: {
-    color: '#9af4fd', // Match the boatText color
+    color: '#EAECEC', // Match the boatText color
     fontSize: 16,
     fontWeight: 'normal',
   },

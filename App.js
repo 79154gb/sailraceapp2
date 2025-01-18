@@ -14,6 +14,11 @@ import YourBoatShedScreen from './screens/YourBoatShedScreen'; // Import the new
 import ActivitiesScreen from './screens/ActivitiesScreen'; // Import the ActivitiesScreen
 import UploadActivityScreen from './screens/UploadActivityScreen';
 import RecordActivityScreen from './screens/RecordActivityScreen';
+import CommentsScreen from './screens/CommentsScreen';
+import KeelboatDetailsScreen from './screens/KeelboatDetailsScreen';
+import KeelboatManufacturerScreen from './screens/KeelboatManufacturerScreen';
+import KeelboatModelsScreen from './screens/KeelboatModelsScreen';
+import KeelboatPolarsScreen from './screens/KeelboatPolarsScreen'; // Import the new screen
 
 const Stack = createStackNavigator();
 
@@ -71,6 +76,31 @@ const App = () => {
           name="RecordActivityScreen"
           options={{title: 'Record Activity'}}
           component={RecordActivityScreen}
+        />
+        <Stack.Screen
+          name="CommentsScreen"
+          options={{title: 'Commments'}}
+          component={CommentsScreen}
+        />
+        <Stack.Screen
+          name="KeelboatDetailsScreen"
+          component={KeelboatDetailsScreen}
+          options={{title: 'Keelboat Details'}} // Optional: customize the header title
+        />
+        <Stack.Screen
+          name="KeelboatManufacturer"
+          component={KeelboatManufacturerScreen} // Adding the Keelboat Manufacturer Screen
+          options={{title: 'Keelboat Manufacturer'}} // Optional: customize the header title
+        />
+        <Stack.Screen
+          name="KeelboatModels"
+          component={KeelboatModelsScreen} // Adding the Keelboat Models Screen
+          options={{title: 'Keelboat Models'}} // Optional: customize the header title
+        />
+        <Stack.Screen
+          name="KeelboatPolarsScreen"
+          component={KeelboatPolarsScreen}
+          options={{title: 'Keelboat Polars'}}
         />
       </Stack.Navigator>
     </NavigationContainer>

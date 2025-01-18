@@ -34,10 +34,7 @@ const SignUpScreen = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#222831', '#37414f']}
-        style={styles.background}
-      />
+      <LinearGradient colors={['#000000']} style={styles.background} />
       <Text style={styles.title}>Sign Up</Text>
       <TextInput
         style={styles.input}
@@ -78,6 +75,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#000000',
   },
   background: {
     position: 'absolute',
@@ -88,7 +86,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    color: '#9af4fd',
+    color: '#EAECEC',
     marginBottom: 20,
   },
   input: {
@@ -99,13 +97,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   button: {
-    backgroundColor: '#FFAC94',
+    backgroundColor: '#37414f',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
   },
   buttonText: {
-    color: '#9af4fd',
+    color: '#EAECEC',
     fontSize: 18,
     fontWeight: 'bold',
   },

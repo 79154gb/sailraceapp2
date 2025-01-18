@@ -70,7 +70,7 @@ const DinghyModelsScreen = ({route, navigation}) => {
           textStyle={styles.textStyle}
           placeholder="Select model"
           placeholderStyle={{
-            color: '#9af4fd',
+            color: '#EAECEC',
             fontSize: 16,
             fontWeight: 'normal',
           }}
@@ -90,8 +90,9 @@ const DinghyModelsScreen = ({route, navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'flex-start', // Align content to the top
+    paddingTop: 50, // Adjust this value to move buttons down slightly if needed
     backgroundColor: '#000000',
   },
   loadingContainer: {
@@ -115,12 +116,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#37414f', // Matching the "Select model" background color
   },
   dropDownLabel: {
-    color: '#9af4fd',
+    color: '#EAECEC',
     fontSize: 16,
     fontWeight: 'normal',
   },
   textStyle: {
-    color: '#9af4fd', // Matching the text color of "Select model"
+    color: '#EAECEC', // Matching the text color of "Select model"
     fontSize: 16,
     fontWeight: 'normal',
   },

@@ -21,11 +21,11 @@ const HomeScreen = ({navigation, route}) => {
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#222831']} style={styles.background} />
-      <Image
+      {/*<Image
         source={require('./assets/logo.png')}
         style={styles.logo}
         resizeMode="cover"
-      />
+      />*/}
       <Text style={styles.welcomeText}>Sail Race Strategy</Text>
       <Text style={styles.subText}>We put the wind in your Sails</Text>
       <TouchableOpacity
@@ -65,16 +65,17 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     resizeMode: 'cover',
+    marginTop: 10,
   },
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#9af4fd',
-    marginTop: 20,
+    color: '#EAECEC',
+    marginTop: -150,
   },
   subText: {
     fontSize: 18,
-    color: '#9af4fd',
+    color: '#EAECEC',
     marginBottom: 50,
   },
   button: {
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     marginTop: 20, // Adjust this value to create space between the buttons
   },
   buttonText: {
-    color: '#9af4fd',
+    color: '#EAECEC',
     fontSize: 18,
     fontWeight: 'normal',
     textAlign: 'center',

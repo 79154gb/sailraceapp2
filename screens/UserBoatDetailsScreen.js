@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#9af4fd',
+    color: '#EAECEC',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#9af4fd',
+    color: '#EAECEC',
   },
   value: {
     fontSize: 16,
@@ -320,7 +320,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginTop: 5,
-    backgroundColor: '#FFF',
+    backgroundColor: '#37414f',
+    color: '#EAECEC',
   },
   buttonContainer: {
     marginTop: 20,
@@ -333,7 +334,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   buttonText: {
-    color: '#9af4fd',
+    color: '#EAECEC',
     fontSize: 18,
     fontWeight: 'normal',
     textAlign: 'center',
