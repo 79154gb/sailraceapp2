@@ -1,3 +1,5 @@
+// routeCalculations.js
+
 const EARTH_RADIUS = 6371e3; // Earth radius in meters
 
 /**
@@ -28,23 +30,14 @@ function calculateRoute(courseDetails, windData, polarTable) {
 
   // Define candidate TWAs with standard angles
   const candidateTWAs = [
-    // Upwind
     {mode: 'upwind', side: 'starboard', twa: 40},
     {mode: 'upwind', side: 'port', twa: 40},
-
-    // Close Reach
     {mode: 'closeReach', side: 'starboard', twa: 60},
     {mode: 'closeReach', side: 'port', twa: 60},
-
-    // Beam Reach
     {mode: 'beamReach', side: 'starboard', twa: 90},
     {mode: 'beamReach', side: 'port', twa: 90},
-
-    // Broad Reach
     {mode: 'broadReach', side: 'starboard', twa: 120},
     {mode: 'broadReach', side: 'port', twa: 120},
-
-    // Downwind
     {mode: 'downwind', side: 'starboard', twa: 150},
     {mode: 'downwind', side: 'port', twa: 150},
   ];
@@ -137,16 +130,22 @@ function calculateRoute(courseDetails, windData, polarTable) {
         continue;
       }
 
-      const heading =
-        bestOption.side === 'starboard'
-          ? (windDir - bestOption.twa + 360) % 360
-          : (windDir + bestOption.twa) % 360;
+      // Updated heading calculation using calculateHeadingWithTacking
+      const heading = calculateHeadingWithTacking({
+        boatCoordinates: currentPosition,
+        nextWaypoint: mark,
+        windDirection: windDir,
+        currentHeading:
+          bestOption.side === 'starboard'
+            ? (windDir - bestOption.twa + 360) % 360
+            : (windDir + bestOption.twa) % 360,
+      });
 
       const speed = getSpeedFromPolarTable(
         bestOption.twa,
         tws,
         polarTable,
-        bestOption.mode, // Pass mode for speed adjustments
+        bestOption.mode,
       );
 
       // If speed is zero or negative, skip this option
@@ -195,7 +194,6 @@ function calculateRoute(courseDetails, windData, polarTable) {
           distanceReductionComponent,
         };
       } else {
-        // If no improvement, consider alternative options or break
         console.warn(
           'No improvement in distance. Breaking out to prevent infinite loop.',
         );
@@ -284,7 +282,6 @@ function calculateRoute(courseDetails, windData, polarTable) {
         gybe = bestOption.side;
       }
 
-      // Comprehensive Logging
       console.log(
         `Relative Bearing: ${relativeBearing.toFixed(2)}°, Selected TWA: ${
           bestOption.twa
@@ -381,7 +378,6 @@ function extractPolarAngles(polarTable, tws) {
   const gybeAngleRow = polarTable.find(row => row.label === 'Gybe Angle');
 
   if (!windSpeedRow || !beatAngleRow || !gybeAngleRow) {
-    // Default angles if not found in polar table
     return {beatAngle: 45, gybeAngle: 135};
   }
 
@@ -389,9 +385,8 @@ function extractPolarAngles(polarTable, tws) {
   let beatAngle = parseFloat(beatAngleRow.values[windIndex]);
   let gybeAngle = parseFloat(gybeAngleRow.values[windIndex]);
 
-  // Ensure beatAngle and gybeAngle align with standard definitions
-  beatAngle = Math.max(beatAngle, 45); // Minimum 45°
-  gybeAngle = Math.max(gybeAngle, 135); // Minimum 135°
+  beatAngle = Math.max(beatAngle, 45);
+  gybeAngle = Math.max(gybeAngle, 135);
 
   return {beatAngle, gybeAngle};
 }
@@ -406,7 +401,7 @@ function extractPolarAngles(polarTable, tws) {
  * @returns {string} - Classified Point of Sail.
  */
 function classifyPointOfSail(twa, beatAngle, gybeAngle) {
-  twa = (twa + 360) % 360; // Normalize TWA to 0°-360°
+  twa = (twa + 360) % 360;
 
   if (twa > 0 && twa < beatAngle) {
     return 'Beating (Upwind)';
@@ -475,31 +470,23 @@ function getSpeedFromPolarTable(twa, tws, polarTable, mode) {
   const beatTolerance = 10;
   const gybeTolerance = 10;
 
-  // Assign speeds based on mode with tolerance checks
   switch (mode) {
     case 'upwind':
-      // Use beatVMG if within tolerance
       if (Math.abs(twa - currentBeatAngle) <= beatTolerance) {
         return currentBeatVMG;
       }
-      return currentBeatVMG; // Default fallback
-
+      return currentBeatVMG;
     case 'closeReach':
-      return currentRunVMG * 0.9; // Slightly lower than running
-
+      return currentRunVMG * 0.9;
     case 'beamReach':
-      return currentRunVMG; // Standard running speed
-
+      return currentRunVMG;
     case 'broadReach':
-      return currentRunVMG * 1.1; // Higher speed on broad reach
-
+      return currentRunVMG * 1.1;
     case 'downwind':
-      // Use runVMG if within tolerance
       if (Math.abs(twa - currentGybeAngle) <= gybeTolerance) {
         return currentRunVMG;
       }
-      return currentRunVMG * 1.2; // Higher speed when running
-
+      return currentRunVMG * 1.2;
     default:
       return currentRunVMG;
   }
@@ -636,6 +623,8 @@ function angleDiff(a, b) {
 module.exports = {
   calculateRoute,
   calculateBearing,
+  calculateHeadingWithTacking, // Exported for use elsewhere if needed
+  computeBearing, // Exported helper
 };
 
 // ----------------------------------------------------------------------------
@@ -652,13 +641,12 @@ export function calculateHeadingWithTacking({
   windDirection,
   currentHeading,
 }) {
-  // If we have no next waypoint, just keep current heading
-  if (!nextWaypoint) return currentHeading;
+  if (!nextWaypoint) {
+    return currentHeading;
+  }
 
   // Calculate the direct bearing from boat to next waypoint
   const directBearing = computeBearing(boatCoordinates, nextWaypoint);
-  // Adjust to 0-360 range if your computeBearing returns negative angles
-  // (If your computeBearing already does that, you can skip next lines)
   let bearingToWaypoint = directBearing % 360;
   if (bearingToWaypoint < 0) {
     bearingToWaypoint += 360;
@@ -667,34 +655,23 @@ export function calculateHeadingWithTacking({
   // Calculate angle to wind (0 = same direction as wind, 180 = dead downwind)
   const angleToWind = (bearingToWaypoint - windDirection + 360) % 360;
 
-  // Define the no-go zone. 45° is typical, but depends on your polars.
+  // Define the no-go zone. 45° is typical.
   const NO_GO_ANGLE = 45;
 
-  // If angleToWind is within ±45° of wind, that's the no-go zone
-  // i.e., angleToWind in [0..45] or [315..360]
   if (angleToWind < NO_GO_ANGLE || angleToWind > 360 - NO_GO_ANGLE) {
-    // We are too close to the wind; pick port or starboard tack
-    // Simple logic: if angleToWind < 180, we are on the "left" side of the wind
-    // => pick starboard tack (windDir + 45). Otherwise pick port.
     if (angleToWind < 180) {
-      // Starboard tack (windDirection + 45)
       return (windDirection + NO_GO_ANGLE) % 360;
     } else {
-      // Port tack (windDirection - 45)
       return (windDirection - NO_GO_ANGLE + 360) % 360;
     }
   }
-
-  // Otherwise, we can sail directly to the waypoint
   return bearingToWaypoint;
 }
 
 /**
- * Example: If you need a "computeBearing" helper:
- * (If you already have it, remove or rename this accordingly.)
+ * Helper function: Compute bearing from one coordinate to another.
  */
 export function computeBearing(fromCoords, toCoords) {
-  // Basic math: lat/long in radians
   const lat1 = (fromCoords.latitude * Math.PI) / 180;
   const lon1 = (fromCoords.longitude * Math.PI) / 180;
   const lat2 = (toCoords.latitude * Math.PI) / 180;
@@ -707,7 +684,6 @@ export function computeBearing(fromCoords, toCoords) {
     Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
 
   let bearing = Math.atan2(y, x) * (180 / Math.PI);
-  // Normalize to 0-360
   bearing = (bearing + 360) % 360;
   return bearing;
 }

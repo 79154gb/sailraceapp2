@@ -37,7 +37,7 @@ const RaceOverviewScreen = () => {
   const [selectingBoatPosition, setSelectingBoatPosition] = useState(false);
   const mapRef = useRef(null);
   const route = useRoute();
-  const {boatPolars} = route.params || {}; // Assume boatPolars is already in the correct format for calculateRoute
+  const {boatPolars} = route.params || {};
 
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(new Date());
@@ -221,7 +221,6 @@ const RaceOverviewScreen = () => {
   };
 
   const runSimulationLoop = (route, legIndex) => {
-    // End the simulation if we've reached the end of the route or if simulation is stopped
     if (legIndex >= route.length || !simulationRef.current.isRunning) {
       setSimulationRunning(false);
       Alert.alert('Simulation Complete', 'The race simulation has ended.');
@@ -232,8 +231,9 @@ const RaceOverviewScreen = () => {
     simulationRef.current.currentLegIndex = legIndex;
 
     const currentStep = route[legIndex];
+    setCurrentRouteStep(currentStep);
 
-    // Determine the current tack side by checking both tack and gybe properties.
+    // Determine the current tack side based on tack or gybe property.
     const currentTackSide =
       currentStep.tack !== undefined
         ? currentStep.tack
@@ -241,7 +241,6 @@ const RaceOverviewScreen = () => {
         ? currentStep.gybe
         : 'port';
 
-    // Update boat status using the computed tack side
     setBoatStatus({
       heading: currentStep.heading || 0,
       twa: currentStep.twa !== undefined ? currentStep.twa : 0,
@@ -250,7 +249,6 @@ const RaceOverviewScreen = () => {
       pointOfSail: currentStep.pointOfSail || 'Run',
     });
 
-    // Compare with the previous tack side to determine if a maneuver occurred
     if (
       previousTackSideRef.current &&
       previousTackSideRef.current !== currentTackSide &&
@@ -280,7 +278,6 @@ const RaceOverviewScreen = () => {
       );
     }
 
-    // Use currentStep.time if available; otherwise default to 1 (this may need further tuning)
     const duration = Math.max(
       ((currentStep.time || 1) / speedMultiplier) * 1000,
       1000,
@@ -431,14 +428,16 @@ const RaceOverviewScreen = () => {
                     longitude: boatPosition.longitude,
                   }
                 : null,
-              ...racePlan.map(
-                step =>
-                  step.position && {
-                    latitude: step.position.latitude,
-                    longitude: step.position.longitude,
-                  },
-              ),
-            ].filter(coord => coord !== null)}
+              ...racePlan
+                .map(
+                  step =>
+                    step.position && {
+                      latitude: step.position.latitude,
+                      longitude: step.position.longitude,
+                    },
+                )
+                .filter(coord => coord !== null),
+            ]}
             strokeColor="purple"
             strokeWidth={2}
           />
