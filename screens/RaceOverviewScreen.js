@@ -221,31 +221,58 @@ const RaceOverviewScreen = () => {
   };
 
   const runSimulationLoop = (route, legIndex) => {
+    // End the simulation if we've reached the end of the route or if simulation is stopped
     if (legIndex >= route.length || !simulationRef.current.isRunning) {
       setSimulationRunning(false);
       Alert.alert('Simulation Complete', 'The race simulation has ended.');
       return;
     }
 
-    const currentStep = route[legIndex];
-    setCurrentRouteStep(currentStep);
+    // Update current leg index for UI purposes
+    simulationRef.current.currentLegIndex = legIndex;
 
+    const currentStep = route[legIndex];
+
+    // Determine the current tack side by checking both tack and gybe properties.
+    const currentTackSide =
+      currentStep.tack !== undefined
+        ? currentStep.tack
+        : currentStep.gybe !== undefined
+        ? currentStep.gybe
+        : 'port';
+
+    // Update boat status using the computed tack side
     setBoatStatus({
       heading: currentStep.heading || 0,
       twa: currentStep.twa !== undefined ? currentStep.twa : 0,
       speed: currentStep.speed !== undefined ? currentStep.speed : 0,
-      tackSide: currentStep.tack || 'port',
+      tackSide: currentTackSide,
       pointOfSail: currentStep.pointOfSail || 'Run',
     });
 
-    currentTackRef.current = currentStep.tack || 'port';
+    // Compare with the previous tack side to determine if a maneuver occurred
+    if (
+      previousTackSideRef.current &&
+      previousTackSideRef.current !== currentTackSide &&
+      currentStep.action !== 'finish'
+    ) {
+      let maneuver = `Change tack to ${currentTackSide}`;
+      if (currentStep.pointOfSail?.includes('Close')) {
+        maneuver = `Tack to ${currentTackSide}`;
+      } else if (currentStep.pointOfSail?.includes('Broad')) {
+        maneuver = `Gybe to ${currentTackSide}`;
+      }
+      setCurrentManeuver(maneuver);
+      setTimeout(() => setCurrentManeuver(null), 5000);
+    }
+    previousTackSideRef.current = currentTackSide;
 
     console.log(`Leg ${legIndex + 1}/${route.length}:`);
     console.log(`  Action: ${currentStep.action}`);
     console.log(`  Heading: ${currentStep.heading}°`);
     console.log(`  TWA: ${currentStep.twa}°`);
     console.log(`  Speed: ${currentStep.speed} kts`);
-    console.log(`  Tack Side: ${currentStep.tack}`);
+    console.log(`  Tack Side: ${currentTackSide}`);
     console.log(`  Point of Sail: ${currentStep.pointOfSail}`);
     if (currentStep.position) {
       console.log(
@@ -253,6 +280,7 @@ const RaceOverviewScreen = () => {
       );
     }
 
+    // Use currentStep.time if available; otherwise default to 1 (this may need further tuning)
     const duration = Math.max(
       ((currentStep.time || 1) / speedMultiplier) * 1000,
       1000,
@@ -263,22 +291,6 @@ const RaceOverviewScreen = () => {
     if (currentStep.heading !== undefined) {
       animateBoatHeading(currentStep.heading, duration);
     }
-
-    if (
-      previousTackSideRef.current &&
-      previousTackSideRef.current !== (currentStep.tack || 'port') &&
-      currentStep.action !== 'finish'
-    ) {
-      let maneuver = `Change tack to ${currentStep.tack}`;
-      if (currentStep.pointOfSail?.includes('Close')) {
-        maneuver = `Tack to ${currentStep.tack}`;
-      } else if (currentStep.pointOfSail?.includes('Broad')) {
-        maneuver = `Gybe to ${currentStep.tack}`;
-      }
-      setCurrentManeuver(maneuver);
-      setTimeout(() => setCurrentManeuver(null), 5000);
-    }
-    previousTackSideRef.current = currentStep.tack || 'port';
 
     if (currentStep.action === 'finish') {
       console.log('All marks reached. Race finished.');

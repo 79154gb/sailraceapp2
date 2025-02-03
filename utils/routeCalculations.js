@@ -637,3 +637,77 @@ module.exports = {
   calculateRoute,
   calculateBearing,
 };
+
+// ----------------------------------------------------------------------------
+// 1) ADD THIS FUNCTION NEAR THE END OF routeCalculations.js
+// ----------------------------------------------------------------------------
+
+/**
+ * Calculate a heading that respects a no-go zone (e.g., ±45° from wind).
+ * If direct bearing is inside that zone, we pick a close-hauled angle.
+ */
+export function calculateHeadingWithTacking({
+  boatCoordinates,
+  nextWaypoint,
+  windDirection,
+  currentHeading,
+}) {
+  // If we have no next waypoint, just keep current heading
+  if (!nextWaypoint) return currentHeading;
+
+  // Calculate the direct bearing from boat to next waypoint
+  const directBearing = computeBearing(boatCoordinates, nextWaypoint);
+  // Adjust to 0-360 range if your computeBearing returns negative angles
+  // (If your computeBearing already does that, you can skip next lines)
+  let bearingToWaypoint = directBearing % 360;
+  if (bearingToWaypoint < 0) {
+    bearingToWaypoint += 360;
+  }
+
+  // Calculate angle to wind (0 = same direction as wind, 180 = dead downwind)
+  const angleToWind = (bearingToWaypoint - windDirection + 360) % 360;
+
+  // Define the no-go zone. 45° is typical, but depends on your polars.
+  const NO_GO_ANGLE = 45;
+
+  // If angleToWind is within ±45° of wind, that's the no-go zone
+  // i.e., angleToWind in [0..45] or [315..360]
+  if (angleToWind < NO_GO_ANGLE || angleToWind > 360 - NO_GO_ANGLE) {
+    // We are too close to the wind; pick port or starboard tack
+    // Simple logic: if angleToWind < 180, we are on the "left" side of the wind
+    // => pick starboard tack (windDir + 45). Otherwise pick port.
+    if (angleToWind < 180) {
+      // Starboard tack (windDirection + 45)
+      return (windDirection + NO_GO_ANGLE) % 360;
+    } else {
+      // Port tack (windDirection - 45)
+      return (windDirection - NO_GO_ANGLE + 360) % 360;
+    }
+  }
+
+  // Otherwise, we can sail directly to the waypoint
+  return bearingToWaypoint;
+}
+
+/**
+ * Example: If you need a "computeBearing" helper:
+ * (If you already have it, remove or rename this accordingly.)
+ */
+export function computeBearing(fromCoords, toCoords) {
+  // Basic math: lat/long in radians
+  const lat1 = (fromCoords.latitude * Math.PI) / 180;
+  const lon1 = (fromCoords.longitude * Math.PI) / 180;
+  const lat2 = (toCoords.latitude * Math.PI) / 180;
+  const lon2 = (toCoords.longitude * Math.PI) / 180;
+
+  const dLon = lon2 - lon1;
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+  let bearing = Math.atan2(y, x) * (180 / Math.PI);
+  // Normalize to 0-360
+  bearing = (bearing + 360) % 360;
+  return bearing;
+}
