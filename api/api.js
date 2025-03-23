@@ -342,6 +342,18 @@ export const getComments = async (userId, activityId) => {
   }
 };
 
+export const deleteComment = async (userId, activityId, commentId) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/api/activities/${userId}/${activityId}/comments/${commentId}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete comment:', error);
+    throw error;
+  }
+};
+
 // Fetch keelboat manufacturers
 export const getKeelboatManufacturers = async () => {
   try {

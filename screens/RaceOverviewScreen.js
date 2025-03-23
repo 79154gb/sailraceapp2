@@ -1,5 +1,3 @@
-// RaceOverviewScreen.js
-
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   View,
@@ -15,26 +13,39 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import CustomButton from '../components/CustomButton';
 import MarkerPicker from '../components/MarkerPicker';
 import InfoRow from '../components/InfoRow';
-import {calculateRoute} from '../utils/routeCalculations'; // Only calculateRoute
+import {
+  calculateRoute,
+  calculateBearing,
+  toRadians,
+  toDegrees,
+} from '../utils/routeCalculations';
 import markerTypes from '../utils/markerTypes';
 import WindArrow from '../components/windarrow';
 import {useRoute} from '@react-navigation/native';
 
+// Scale factor to speed up simulation time
+const SIMULATION_TIME_SCALE = 0.01;
+// Lateral offset amplitude (in degrees). Approximately 0.0005 deg ≈ 55 m.
+const OFFSET_AMPLITUDE = 0.0005;
+
 const RaceOverviewScreen = () => {
+  // [State declarations remain largely the same...]
   const [boatPosition, setBoatPosition] = useState(null);
   const [startLine, setStartLine] = useState({marker1: null, marker2: null});
   const [markers, setMarkers] = useState([]);
   const [selectedMarkerType, setSelectedMarkerType] = useState(null);
   const [sequenceOfMarks, setSequenceOfMarks] = useState([]);
-  const [racePlan, setRacePlan] = useState([]);
   const [selectingStartLine, setSelectingStartLine] = useState(false);
   const [selectingSequence, setSelectingSequence] = useState(false);
+  const [racePlan, setRacePlan] = useState([]);
   const [simulationRunning, setSimulationRunning] = useState(false);
+  const [currentManeuver, setCurrentManeuver] = useState(null);
+  const [selectingBoatPosition, setSelectingBoatPosition] = useState(false);
+  const [currentLegInfo, setCurrentLegInfo] = useState(null);
   const [totalTacks, setTotalTacks] = useState(0);
   const [totalGybes, setTotalGybes] = useState(0);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
-  const [currentManeuver, setCurrentManeuver] = useState(null);
-  const [selectingBoatPosition, setSelectingBoatPosition] = useState(false);
+
   const mapRef = useRef(null);
   const route = useRoute();
   const {boatPolars} = route.params || {};
@@ -46,20 +57,6 @@ const RaceOverviewScreen = () => {
   const [windInfo, setWindInfo] = useState({speed: null, direction: null});
   const [tideInfo, setTideInfo] = useState({speed: null, direction: null});
 
-  const [currentRouteStep, setCurrentRouteStep] = useState(null);
-  const [boatStatus, setBoatStatus] = useState({
-    heading: 0,
-    twa: 0,
-    speed: 0,
-    tackSide: 'port',
-    pointOfSail: 'Run',
-  });
-
-  const simulationRef = useRef({
-    currentLegIndex: 0,
-    isRunning: false,
-  });
-
   const boatPositionAnim = useRef(
     new AnimatedRegion({
       latitude: 0,
@@ -69,9 +66,6 @@ const RaceOverviewScreen = () => {
     }),
   ).current;
   const boatHeadingAnim = useRef(new Animated.Value(0)).current;
-
-  const currentTackRef = useRef('port');
-  const previousTackSideRef = useRef(null);
 
   const [isPanelVisible, setIsPanelVisible] = useState(true);
   const panelHeight = useRef(new Animated.Value(1)).current;
@@ -90,10 +84,8 @@ const RaceOverviewScreen = () => {
     const mockWindDirection = parseFloat((Math.random() * 360).toFixed(2));
     const mockTideSpeed = parseFloat((Math.random() * 3 + 0.5).toFixed(2));
     const mockTideDirection = parseFloat((Math.random() * 360).toFixed(2));
-
     setWindInfo({speed: mockWindSpeed, direction: mockWindDirection});
     setTideInfo({speed: mockTideSpeed, direction: mockTideDirection});
-
     console.log('Wind Info:', {
       speed: mockWindSpeed,
       direction: mockWindDirection,
@@ -110,7 +102,6 @@ const RaceOverviewScreen = () => {
 
   const handleMapPress = event => {
     const {coordinate} = event.nativeEvent;
-
     if (selectingBoatPosition) {
       setBoatPosition(coordinate);
       boatPositionAnim.setValue({
@@ -126,10 +117,7 @@ const RaceOverviewScreen = () => {
         setStartLine({marker1: coordinate, marker2: null});
         console.log('Start line marker 1 set:', coordinate);
       } else {
-        setStartLine(prev => ({
-          ...prev,
-          marker2: coordinate,
-        }));
+        setStartLine(prev => ({...prev, marker2: coordinate}));
         setSelectingStartLine(false);
         console.log('Start line marker 2 set:', coordinate);
       }
@@ -137,169 +125,27 @@ const RaceOverviewScreen = () => {
       setSequenceOfMarks(prev => [...prev, coordinate]);
       console.log('New sequence mark added:', coordinate);
     } else if (selectedMarkerType) {
-      const newMarker = {
-        coordinate,
-        key: markers.length + '_' + Date.now(),
-        type: selectedMarkerType,
-        color:
-          markerTypes.find(type => type.value === selectedMarkerType)?.color ||
-          'black',
-      };
-      setMarkers(prevMarkers => [...prevMarkers, newMarker]);
-      console.log('Marker placed:', newMarker);
-      setSelectedMarkerType(null);
-    }
-  };
-
-  const startSimulation = () => {
-    if (
-      !boatPosition ||
-      !startLine.marker1 ||
-      !startLine.marker2 ||
-      sequenceOfMarks.length < 5 ||
-      !boatPolars ||
-      windInfo.speed === null ||
-      windInfo.direction === null
-    ) {
-      Alert.alert(
-        'Error',
-        'Please ensure all inputs (boat position, start line, required marks, polars, wind) are set.',
-      );
-      console.error('Invalid or missing inputs for route calculation.');
-      return;
-    }
-
-    // Construct courseDetails from inputs
-    const courseDetails = {
-      boat_starting_position: {
-        latitude: boatPosition.latitude,
-        longitude: boatPosition.longitude,
-      },
-      course: {
-        waypoints: sequenceOfMarks.map(mark => ({
-          latitude: mark.latitude,
-          longitude: mark.longitude,
-        })),
-      },
-    };
-
-    const windData = {
-      wind: {
-        speed: windInfo.speed,
-        direction: windInfo.direction,
-        gusts: 20,
-        change: {
-          speed: 'increase',
-          direction: 'stable',
-        },
-      },
-    };
-
-    console.log('courseDetails:', courseDetails);
-    console.log('windData:', windData);
-    console.log('boatPolars:', boatPolars);
-
-    const fullRoute = calculateRoute(courseDetails, windData, boatPolars);
-
-    if (!fullRoute || fullRoute.length === 0) {
-      Alert.alert('Error', 'Failed to calculate route. Check your inputs.');
-      console.error('Route calculation returned empty route.');
-      return;
-    }
-
-    setTotalTacks(0);
-    setTotalGybes(0);
-
-    setRacePlan(fullRoute);
-    simulationRef.current.currentLegIndex = 0;
-    simulationRef.current.isRunning = true;
-    setSimulationRunning(true);
-
-    console.log('Simulation started with calculated route.');
-
-    runSimulationLoop(fullRoute, 0);
-  };
-
-  const runSimulationLoop = (route, legIndex) => {
-    if (legIndex >= route.length || !simulationRef.current.isRunning) {
-      setSimulationRunning(false);
-      Alert.alert('Simulation Complete', 'The race simulation has ended.');
-      return;
-    }
-
-    // Update current leg index for UI purposes
-    simulationRef.current.currentLegIndex = legIndex;
-
-    const currentStep = route[legIndex];
-    setCurrentRouteStep(currentStep);
-
-    // Determine the current tack side based on tack or gybe property.
-    const currentTackSide =
-      currentStep.tack !== undefined
-        ? currentStep.tack
-        : currentStep.gybe !== undefined
-        ? currentStep.gybe
-        : 'port';
-
-    setBoatStatus({
-      heading: currentStep.heading || 0,
-      twa: currentStep.twa !== undefined ? currentStep.twa : 0,
-      speed: currentStep.speed !== undefined ? currentStep.speed : 0,
-      tackSide: currentTackSide,
-      pointOfSail: currentStep.pointOfSail || 'Run',
-    });
-
-    if (
-      previousTackSideRef.current &&
-      previousTackSideRef.current !== currentTackSide &&
-      currentStep.action !== 'finish'
-    ) {
-      let maneuver = `Change tack to ${currentTackSide}`;
-      if (currentStep.pointOfSail?.includes('Close')) {
-        maneuver = `Tack to ${currentTackSide}`;
-      } else if (currentStep.pointOfSail?.includes('Broad')) {
-        maneuver = `Gybe to ${currentTackSide}`;
+      if (selectedMarkerType === 'Windward' || selectedMarkerType === 'Reach') {
+        setSequenceOfMarks(prev => [...prev, coordinate]);
+        console.log('New sequence mark added (Windward/Reach):', coordinate);
+        setSelectedMarkerType(null);
+      } else {
+        const newMarker = {
+          coordinate,
+          key: markers.length + '_' + Date.now(),
+          type: selectedMarkerType,
+          color:
+            markerTypes.find(type => type.value === selectedMarkerType)
+              ?.color || 'black',
+        };
+        setMarkers(prevMarkers => [...prevMarkers, newMarker]);
+        console.log('Marker placed:', newMarker);
+        setSelectedMarkerType(null);
       }
-      setCurrentManeuver(maneuver);
-      setTimeout(() => setCurrentManeuver(null), 5000);
     }
-    previousTackSideRef.current = currentTackSide;
-
-    console.log(`Leg ${legIndex + 1}/${route.length}:`);
-    console.log(`  Action: ${currentStep.action}`);
-    console.log(`  Heading: ${currentStep.heading}°`);
-    console.log(`  TWA: ${currentStep.twa}°`);
-    console.log(`  Speed: ${currentStep.speed} kts`);
-    console.log(`  Tack Side: ${currentTackSide}`);
-    console.log(`  Point of Sail: ${currentStep.pointOfSail}`);
-    if (currentStep.position) {
-      console.log(
-        `  Position: (${currentStep.position.latitude}, ${currentStep.position.longitude})`,
-      );
-    }
-
-    const duration = Math.max(
-      ((currentStep.time || 1) / speedMultiplier) * 1000,
-      1000,
-    );
-    if (currentStep.position) {
-      animateBoatPosition(currentStep.position, duration);
-    }
-    if (currentStep.heading !== undefined) {
-      animateBoatHeading(currentStep.heading, duration);
-    }
-
-    if (currentStep.action === 'finish') {
-      console.log('All marks reached. Race finished.');
-      setSimulationRunning(false);
-      simulationRef.current.isRunning = false;
-      Alert.alert('Race Complete', 'You have finished the race!');
-      return;
-    }
-
-    setTimeout(() => runSimulationLoop(route, legIndex + 1), duration);
   };
 
+  // Reuse old animation functions.
   const animateBoatPosition = (newPosition, duration) => {
     if (!newPosition || !newPosition.latitude || !newPosition.longitude) {
       console.error('Invalid newPosition:', newPosition);
@@ -333,6 +179,144 @@ const RaceOverviewScreen = () => {
     }).start();
   };
 
+  // Updated simulateLeg to add a lateral (perpendicular) offset and alternate heading every step
+  const simulateLeg = (leg, stepIndex, numSteps, onComplete) => {
+    console.log(`simulateLeg: step ${stepIndex} of ${numSteps}`);
+    if (stepIndex > numSteps) {
+      console.log('Leg complete.');
+      onComplete();
+      return;
+    }
+    // Linear interpolation for base position.
+    const fraction = stepIndex / numSteps;
+    const baseLat =
+      leg.start.latitude + (leg.end.latitude - leg.start.latitude) * fraction;
+    const baseLon =
+      leg.start.longitude +
+      (leg.end.longitude - leg.start.longitude) * fraction;
+    let adjustedPosition = {latitude: baseLat, longitude: baseLon};
+    let heading = leg.selectedHeading; // default heading
+
+    // If upwind or downwind, alternate heading and add a lateral offset to simulate a zigzag.
+    if (leg.mode === 'upwind' || leg.mode === 'downwind') {
+      // Compute two possible tack/gybe headings.
+      const tackOption1 = (windInfo.direction + leg.chosenTWA) % 360;
+      const tackOption2 = (windInfo.direction - leg.chosenTWA + 360) % 360;
+      // Alternate heading every step.
+      heading = stepIndex % 2 === 0 ? tackOption1 : tackOption2;
+      // Also, compute the bearing of the leg.
+      const legBearing = calculateBearing(
+        leg.start.latitude,
+        leg.start.longitude,
+        leg.end.latitude,
+        leg.end.longitude,
+      );
+      // Compute a perpendicular direction (legBearing + 90°).
+      const offsetBearing = (legBearing + 90) % 360;
+      // Use a sine function to create an oscillating offset.
+      const offsetFactor = Math.sin((2 * Math.PI * stepIndex) / numSteps);
+      // Compute offset deltas (approximation; 1 degree latitude ~ 111km)
+      const offsetLat =
+        OFFSET_AMPLITUDE * offsetFactor * Math.cos(toRadians(offsetBearing));
+      const offsetLon =
+        (OFFSET_AMPLITUDE * offsetFactor * Math.sin(toRadians(offsetBearing))) /
+        Math.cos(toRadians(baseLat));
+      adjustedPosition = {
+        latitude: baseLat + offsetLat,
+        longitude: baseLon + offsetLon,
+      };
+    }
+
+    const stepDuration =
+      (leg.estimatedTime * 1000 * SIMULATION_TIME_SCALE) / numSteps;
+    animateBoatPosition(adjustedPosition, stepDuration);
+    animateBoatHeading(heading, stepDuration);
+    setTimeout(
+      () => simulateLeg(leg, stepIndex + 1, numSteps, onComplete),
+      stepDuration,
+    );
+  };
+
+  // Simulation ref for tracking current leg index and running state.
+  const simulationRef = useRef({currentLegIndex: 0, isRunning: false});
+
+  // Simulation loop: iterate over legs.
+  const runLegSimulation = (legs, legIndex) => {
+    console.log(`runLegSimulation: leg ${legIndex} of ${legs.length}`);
+    if (legIndex >= legs.length || !simulationRef.current.isRunning) {
+      setSimulationRunning(false);
+      Alert.alert('Simulation Complete', 'The race simulation has ended.');
+      return;
+    }
+    const currentLeg = legs[legIndex];
+    console.log('Current leg:', currentLeg);
+    setCurrentLegInfo(currentLeg);
+    const stepsPerLeg = 10;
+    // (Optional: If you want to simulate an initial maneuver pause for tack/gybe,
+    // you can add that logic here. For now, we directly simulate the leg.)
+    simulateLeg(currentLeg, 0, stepsPerLeg, () => {
+      simulationRef.current.currentLegIndex = legIndex + 1;
+      runLegSimulation(legs, legIndex + 1);
+    });
+  };
+
+  // Simulation starter.
+  const startSimulation = () => {
+    if (
+      !boatPosition ||
+      !startLine.marker1 ||
+      !startLine.marker2 ||
+      sequenceOfMarks.length < 5 ||
+      !boatPolars ||
+      windInfo.speed === null ||
+      windInfo.direction === null
+    ) {
+      Alert.alert(
+        'Error',
+        'Please ensure all inputs (boat position, start line, course marks, polars, wind) are set.',
+      );
+      console.error('Invalid or missing inputs for route calculation.');
+      return;
+    }
+    const courseDetails = {
+      boat_starting_position: {
+        latitude: boatPosition.latitude,
+        longitude: boatPosition.longitude,
+      },
+      course: {
+        waypoints: sequenceOfMarks.map(mark => ({
+          latitude: mark.latitude,
+          longitude: mark.longitude,
+        })),
+      },
+    };
+    const windData = {
+      wind: {
+        speed: windInfo.speed,
+        direction: windInfo.direction,
+        gusts: 20,
+        change: {speed: 'increase', direction: 'stable'},
+      },
+    };
+    console.log('courseDetails:', courseDetails);
+    console.log('windData:', windData);
+    console.log('boatPolars:', boatPolars);
+
+    const legs = calculateRoute(courseDetails, windData, boatPolars);
+    if (!legs || legs.length === 0) {
+      Alert.alert('Error', 'Failed to calculate route. Check your inputs.');
+      console.error('Route calculation returned empty route.');
+      return;
+    }
+    setTotalTacks(0);
+    setTotalGybes(0);
+    setRacePlan(legs);
+    simulationRef.current = {currentLegIndex: 0, isRunning: true};
+    setSimulationRunning(true);
+    console.log('Simulation started with calculated route.');
+    runLegSimulation(legs, 0);
+  };
+
   const resetRace = () => {
     setBoatPosition(null);
     setStartLine({marker1: null, marker2: null});
@@ -340,20 +324,10 @@ const RaceOverviewScreen = () => {
     setSequenceOfMarks([]);
     setRacePlan([]);
     setSimulationRunning(false);
-    setCurrentRouteStep(null);
-    setBoatStatus({
-      heading: 0,
-      twa: 0,
-      speed: 0,
-      tackSide: 'port',
-      pointOfSail: 'Run',
-    });
+    setCurrentLegInfo(null);
     setTotalTacks(0);
     setTotalGybes(0);
-    simulationRef.current.currentLegIndex = 0;
-    simulationRef.current.isRunning = false;
-    currentTackRef.current = 'port';
-    previousTackSideRef.current = null;
+    simulationRef.current = {currentLegIndex: 0, isRunning: false};
     setSpeedMultiplier(1);
     setCurrentManeuver(null);
     setSelectingBoatPosition(false);
@@ -387,13 +361,21 @@ const RaceOverviewScreen = () => {
             strokeWidth={2}
           />
         )}
-        {sequenceOfMarks.length > 1 && (
-          <Polyline
-            coordinates={sequenceOfMarks}
-            strokeColor="blue"
-            strokeWidth={2}
-          />
-        )}
+        {sequenceOfMarks.length > 1 &&
+          sequenceOfMarks.map((mark, index) => {
+            if (index === 0) return null; // Skip first mark
+            return (
+              <Polyline
+                key={`line-${index}`}
+                coordinates={[
+                  sequenceOfMarks[index - 1],
+                  sequenceOfMarks[index],
+                ]}
+                strokeColor="blue"
+                strokeWidth={2}
+              />
+            );
+          })}
         {sequenceOfMarks.map((mark, index) => (
           <Marker
             key={`mark${index}`}
@@ -415,7 +397,10 @@ const RaceOverviewScreen = () => {
             coordinate={boatPositionAnim}
             title="Boat Starting Position"
             pinColor="blue"
-            rotation={boatHeadingAnim.__getValue()}
+            rotation={boatHeadingAnim.interpolate({
+              inputRange: [0, 360],
+              outputRange: ['0deg', '360deg'],
+            })}
             anchor={{x: 0.5, y: 0.5}}
           />
         )}
@@ -428,16 +413,8 @@ const RaceOverviewScreen = () => {
                     longitude: boatPosition.longitude,
                   }
                 : null,
-              ...racePlan
-                .map(
-                  step =>
-                    step.position && {
-                      latitude: step.position.latitude,
-                      longitude: step.position.longitude,
-                    },
-                )
-                .filter(coord => coord !== null),
-            ]}
+              ...racePlan.map(leg => leg.end).filter(coord => coord !== null),
+            ].filter(coord => coord !== null)}
             strokeColor="purple"
             strokeWidth={2}
           />
@@ -475,12 +452,10 @@ const RaceOverviewScreen = () => {
             <Text style={styles.text}>+</Text>
           </TouchableOpacity>
         </View>
-
         <MarkerPicker
           selectedMarkerType={selectedMarkerType}
           setSelectedMarkerType={setSelectedMarkerType}
         />
-
         <View style={styles.row}>
           <CustomButton
             title="Define Start Line"
@@ -501,7 +476,6 @@ const RaceOverviewScreen = () => {
             />
           )}
         </View>
-
         <View style={styles.row}>
           <CustomButton
             title="Set Boat Starting Position"
@@ -519,7 +493,6 @@ const RaceOverviewScreen = () => {
             />
           )}
         </View>
-
         <View style={styles.row}>
           <CustomButton
             title={simulationRunning ? 'Stop Simulation' : 'Start Simulation'}
@@ -542,12 +515,10 @@ const RaceOverviewScreen = () => {
           />
         </View>
       </View>
-
       <View style={styles.windArrowContainer}>
         <WindArrow windDirection={windInfo.direction} />
         <Text style={styles.windText}>Wind Direction</Text>
       </View>
-
       <View style={styles.topContainer}>
         <TouchableOpacity
           style={styles.toggleButton}
@@ -556,89 +527,84 @@ const RaceOverviewScreen = () => {
             {isPanelVisible ? 'Hide Info' : 'Show Info'}
           </Text>
         </TouchableOpacity>
-
-        <Animated.View
-          style={[
-            styles.shadowContainer,
-            {
-              transform: [{scaleY: panelHeight}],
-              opacity: panelHeight,
-            },
-          ]}>
-          <View style={styles.infoContainer}>
-            <InfoRow
-              label="Boat Position"
-              value={
-                boatPosition
-                  ? `${boatPosition.latitude.toFixed(
-                      5,
-                    )}, ${boatPosition.longitude.toFixed(5)}`
-                  : 'Not Set'
-              }
-            />
-            <InfoRow
-              label="Start Line"
-              value={
-                startLine.marker1 && startLine.marker2
-                  ? 'Defined'
-                  : 'Not Defined'
-              }
-            />
-            <InfoRow
-              label="Wind"
-              value={`${windInfo.speed?.toFixed(
-                1,
-              )} kts @ ${windInfo.direction?.toFixed(0)}°`}
-            />
-            <InfoRow
-              label="Tide"
-              value={`${tideInfo.speed?.toFixed(
-                1,
-              )} kts @ ${tideInfo.direction?.toFixed(0)}°`}
-            />
-            {simulationRunning && currentRouteStep && (
-              <>
-                <InfoRow
-                  label="Boat Heading"
-                  value={`${boatStatus.heading.toFixed(1)}°`}
-                />
-                <InfoRow
-                  label="TWA"
-                  value={`${
-                    boatStatus.twa !== undefined
-                      ? boatStatus.twa.toFixed(1)
-                      : '0.0'
-                  }°`}
-                />
-                <InfoRow
-                  label="Speed"
-                  value={`${
-                    boatStatus.speed !== undefined
-                      ? boatStatus.speed.toFixed(1)
-                      : '0.0'
-                  } kts`}
-                />
-                <InfoRow label="Tack Side" value={`${boatStatus.tackSide}`} />
-                <InfoRow
-                  label="Point of Sail"
-                  value={`${boatStatus.pointOfSail}`}
-                />
-              </>
-            )}
-            {simulationRunning && (
+        {isPanelVisible && (
+          <Animated.View
+            style={[
+              styles.shadowContainer,
+              {
+                transform: [
+                  {
+                    scaleY: panelHeight.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 1],
+                    }),
+                  },
+                ],
+                opacity: panelHeight.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 1],
+                }),
+              },
+            ]}>
+            <View style={styles.infoContainer}>
               <InfoRow
-                label="Current Leg"
-                value={`Leg ${simulationRef.current.currentLegIndex + 1} of ${
-                  racePlan.length
-                }`}
+                label="Boat Position"
+                value={
+                  boatPosition
+                    ? `${boatPosition.latitude.toFixed(
+                        5,
+                      )}, ${boatPosition.longitude.toFixed(5)}`
+                    : 'Not Set'
+                }
               />
-            )}
-            <InfoRow label="Total Tacks" value={`${totalTacks}`} />
-            <InfoRow label="Total Gybes" value={`${totalGybes}`} />
-          </View>
-        </Animated.View>
+              <InfoRow
+                label="Start Line"
+                value={
+                  startLine.marker1 && startLine.marker2
+                    ? 'Defined'
+                    : 'Not Defined'
+                }
+              />
+              <InfoRow
+                label="Wind"
+                value={`${windInfo.speed?.toFixed(
+                  1,
+                )} kts @ ${windInfo.direction?.toFixed(0)}°`}
+              />
+              <InfoRow
+                label="Tide"
+                value={`${tideInfo.speed?.toFixed(
+                  1,
+                )} kts @ ${tideInfo.direction?.toFixed(0)}°`}
+              />
+              {simulationRunning && currentLegInfo && (
+                <>
+                  <InfoRow label="Leg Mode" value={currentLegInfo.mode} />
+                  <InfoRow label="TWA" value={`${currentLegInfo.chosenTWA}°`} />
+                  <InfoRow
+                    label="Heading"
+                    value={`${currentLegInfo.selectedHeading}°`}
+                  />
+                  <InfoRow
+                    label="Est. Time"
+                    value={`${currentLegInfo.estimatedTime.toFixed(1)} sec`}
+                  />
+                </>
+              )}
+              {simulationRunning && (
+                <InfoRow
+                  label="Current Leg"
+                  value={`Leg ${simulationRef.current.currentLegIndex + 1} of ${
+                    racePlan.length
+                  }`}
+                />
+              )}
+              <InfoRow label="Total Tacks" value={`${totalTacks}`} />
+              <InfoRow label="Total Gybes" value={`${totalGybes}`} />
+            </View>
+          </Animated.View>
+        )}
       </View>
-
       {showDatePicker && (
         <DateTimePicker
           value={date}

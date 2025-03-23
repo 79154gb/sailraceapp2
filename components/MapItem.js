@@ -1,9 +1,22 @@
 import React, {useEffect, useRef, useMemo} from 'react';
-import {View, Text, StyleSheet, Dimensions} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+} from 'react-native';
 import MapView, {Polyline} from 'react-native-maps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const MapItem = ({item, onDelete}) => {
+const MapItem = ({
+  item,
+  commentCount,
+  likeCount,
+  onDelete,
+  onLike,
+  onComment,
+}) => {
   const mapRef = useRef(null);
 
   // Handle trackPoints based on its type
@@ -20,7 +33,6 @@ const MapItem = ({item, onDelete}) => {
       points = item.trackPoints; // Use directly if it's already an array
     } else if (typeof item.trackPoints === 'object') {
       // If it's an object, you need to decide how to extract coordinates
-      // This depends on your specific data structure.
       console.error(
         'trackPoints is an object, expected array:',
         item.trackPoints,
@@ -61,6 +73,15 @@ const MapItem = ({item, onDelete}) => {
         </View>
         <Text style={styles.date}>{new Date(item.date).toLocaleString()}</Text>
         <Text style={styles.info}>No track points available</Text>
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity onPress={onLike} style={styles.button}>
+            <Icon name="thumb-up" size={24} color="#EAECEC" />
+            <Text style={styles.likeCountText}>{likeCount}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onComment} style={styles.button}>
+            <Text style={styles.buttonText}>Comment ({commentCount})</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -105,6 +126,15 @@ const MapItem = ({item, onDelete}) => {
           )}
         </MapView>
       </View>
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity onPress={onLike} style={styles.button}>
+          <Icon name="thumb-up" size={24} color="#EAECEC" />
+          <Text style={styles.likeCountText}>{likeCount}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onComment} style={styles.button}>
+          <Text style={styles.buttonText}>Comment ({commentCount})</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -143,6 +173,27 @@ const styles = StyleSheet.create({
     width: Dimensions.get('window').width - 80,
     height: 200,
     borderRadius: 10,
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#37414f',
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#EAECEC',
+    fontSize: 14,
+  },
+  likeCountText: {
+    marginLeft: 5,
+    color: '#EAECEC',
+    fontSize: 16,
   },
 });
 
